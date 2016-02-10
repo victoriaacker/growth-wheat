@@ -391,7 +391,7 @@ class croissance:
 
 class Limbe_emerge:
 
-    def __init__(self, Camidon_em, Cfruc_em, Csuc_em, Ctri_em, Mstruc_em, Naa_em, Proteines_em, Photosynthesis_limbe=None, Multi_dix_limbe = None):
+    def __init__(self, Camidon_em, Cfruc_em, Csuc_em, Ctri_em, Mstruc_em, Naa_em, Proteines_em, Photosynthesis_limbe=None, Multi_dix_limbe = None, has_emerged=False):
 
         self.Camidon_em = Camidon_em
         self.Cfruc_em = Cfruc_em
@@ -402,6 +402,7 @@ class Limbe_emerge:
         self.Proteines_em = Proteines_em
         self.Photosynthesis_limbe = Photosynthesis_limbe
         self.Multi_dix_limbe = Multi_dix_limbe
+        self.has_emerged = has_emerged
 
     # variables
 
@@ -410,12 +411,10 @@ class Limbe_emerge:
             return Camidon_em/Mstruc_em
         return 0
 
-    def C_em(self, x_em, x, Mstruc_em, Csuc_em):
+    def C_em(self, Mstruc_em, Csuc_em):
         '''µmol/g de MS émergée
         '''
-        if x_em<x and 0<Mstruc_em:
-            return Csuc_em/Mstruc_em
-        return 0
+        return Csuc_em/Mstruc_em
 
     def Fruc_em(self, Mstruc_em, Cfruc_em):
         if 0<Mstruc_em:
@@ -461,12 +460,13 @@ class Limbe_emerge:
 
     # fluxes
 
-    def D_fruc_em(self, x_em, x, Cfruc_em, K_Dfructan, Vmax_Dfructan, C_em, delta_t):
+    def D_fruc_em(self, x_em, x, fruc_em, K_Dfructan, Vmax_Dfructan, C_em, delta_t):
         '''Flow from Cfruc_em to Csuc_em
         '''
-        if x_em<x and 0<Cfruc_em:
-            return ((K_Dfructan * Vmax_Dfructan)/(max(0,C_em) + K_Dfructan)) * delta_t
-        return 0
+        fc = (fruc_em / (fruc_em + 1))**2
+        D_fruc_em = ((K_Dfructan * Vmax_Dfructan)/(max(0,C_em) + K_Dfructan)) * delta_t * fc
+
+        return D_fruc_em
 
     def D_prot_em(self, Mstruc_em, delta_Dproteins, Prot_em, delta_t):
         '''Flow from Proteines_em to Naa_em
@@ -482,10 +482,10 @@ class Limbe_emerge:
             return delta_Dstorage *max(0,Amidon)*delta_t
         return 0
 
-    def Export_Csuc_em(self, x_em, x, xend, C_em, Cpool_croi, q, Mstruc_em, conductance, delta_t):
+    def Export_Csuc_em(self, x, xend, C_em, Cpool_croi, q, Mstruc_em, conductance, delta_t):
         '''Flow from Csuc_em to Out_Csuc_em
         '''
-        if x_em<x and x<xend:
+        if x<xend:
             return (C_em - Cpool_croi)*(q*Mstruc_em)**(2/3)*conductance*delta_t
         return 0
 
@@ -688,8 +688,6 @@ class Zone_cachee:
     def Cpool_croi(self, Csuc_pool_croi, Mstruc_croi):
         '''µmol/gSDM
         '''
-        logger = logging.getLogger(__name__)
-        logger.debug('Cpool_croi={}'.format(Csuc_pool_croi/Mstruc_croi))
         return Csuc_pool_croi/Mstruc_croi
 
     def Fruc_croi(self, Fruc_pool_croi, Mstruc_croi):
@@ -738,16 +736,12 @@ class Zone_cachee:
 
     # fluxes
 
-    def D_Fruc_pool_croi(self, Fruc_pool_croi, K_Dfructan, Vmax_Dfructan, Cpool_croi, delta_t):
+    def D_Fruc_pool_croi(self, Fruc_pool_croi, Mstruc_croi, K_Dfructan, Vmax_Dfructan, Cpool_croi, delta_t):
         '''Flow from Fruc_pool_croi to Csuc_pool_croi
         '''
-        if 0 <Fruc_pool_croi:
-            fc = Fruc_pool_croi / (Fruc_pool_croi + 1000)
-            #print 'fc=', fc
-            D_Fruc_pool_croi_pot = ((K_Dfructan * Vmax_Dfructan)/(Cpool_croi + K_Dfructan)) * delta_t * fc
-            #D_Fruc_pool_croi = min(D_Fruc_pool_croi_pot , max(0, Fruc_pool_croi))
-            return D_Fruc_pool_croi_pot
-        return 0
+        fc = (Fruc_pool_croi / (Fruc_pool_croi + 1))**2
+        D_Fruc_pool_croi_pot = ((K_Dfructan * Vmax_Dfructan)/(Cpool_croi + K_Dfructan)) * delta_t * fc
+        return D_Fruc_pool_croi_pot
 
     def D_Prot_pool_croi(self, delta_Dproteins, Prot_croi, delta_t):
         '''Flow from Prot_pool_croi to Naa_pool_croi
@@ -766,19 +760,19 @@ class Zone_cachee:
         '''
         return In_Csuc_pool_croi_em
 
-    def Export_Csuc_pool_croi(self, x_em, x, Cpool_croi, Export_Mstruc_croi):
+    def Export_Csuc_pool_croi(self, Cpool_croi, Export_Mstruc_croi):
         '''Flow from Csuc_pool_croi to Out_Csuc_pool_croi
         '''
-        if x_em<=x:
-            return max(0,Cpool_croi) * Export_Mstruc_croi
-        return 0
+        return max(0,Cpool_croi) * Export_Mstruc_croi
 
-    def Export_Mstruc_croi(self, x_em, x, L, ligulation, Ltot_max, correction_m, deltaS_photoS, SSLW):
+    def Export_Mstruc_croi(self, L, ligulation, Ltot_max, correction_m, deltaS_photoS, SSLW):
         '''Flow from Mstruc_croi to Out_Mstruc_croi
         '''
-        if x_em<=x and L<= ligulation*Ltot_max:
-            return correction_m*deltaS_photoS * SSLW
-        return 0
+        if L<= ligulation*Ltot_max:
+            Export_Mstruc_croi =  correction_m*deltaS_photoS * SSLW
+        else:
+            Export_Mstruc_croi = 0
+        return Export_Mstruc_croi
 
     def Export_Naa_em(self, In1):
         '''Flow from In1 to Naa_pool_croi

@@ -36,7 +36,7 @@
         "Limbe_emerge_compartments_file": {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "Limbe_emerge.csv",
+            "filename": "Limbe_emerge_compartments.csv",
             "maxBytes": 10485760,
             "backupCount": 20,
             "mode": "w",

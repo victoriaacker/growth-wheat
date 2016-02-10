@@ -32,6 +32,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 
 #### LOGGING###
 import logging
@@ -114,7 +115,7 @@ def test_run():
     Prot_pool_croi = 0.0
 
     start_time = 0
-    stop_time = 400
+    stop_time = 800
     growthwheat_ts = 1
     number_of_output_steps = 2
 
@@ -131,6 +132,10 @@ def test_run():
     photosynthese_limbe_df = photosynthese_limbe_df.loc[:stop_time+1].reindex(new_index)
     photosynthese_limbe_df.interpolate(inplace=True)
 
+
+    # Mstruc
+    Mstruc_df = pd.read_csv(os.path.join('inputs', 'Mstruc.csv'), index_col='t')
+
     # Create population
     simulation_ = simulation.Simulation()
 
@@ -146,8 +151,10 @@ def test_run():
 
     croissance = model.croissance(L, Le, Lem, M_em, Mstruc_tot, S_photoS, S_tot, W_photoS_bis, Wbis, x)
     Limbe_emerge = model.Limbe_emerge(Camidon_em, Cfruc_em, Csuc_em, Ctri_em, Mstruc_em, Naa_em, Proteines_em)
+    Limbe_emerge.Mstruc_em_df = interp1d(range(0, 801), Mstruc_df['Mstruc_em'])
     phloeme = model.phloeme(Csuc_phlo, Naa_phlo)
     Zone_cachee = model.Zone_cachee(C_respi_croi, Camidon_croi, Csuc_pool_croi, Ctri_croi, Fruc_pool_croi, Fruc_pool_E, Mstruc_croi, Mstruc_E, Naa_pool_croi, Prot_pool_croi)
+    Zone_cachee.Mstruc_croi_df = interp1d(range(0, 801), Mstruc_df['Mstruc_croi'])
 
     population = [croissance, Limbe_emerge, phloeme, Zone_cachee]
 
@@ -158,6 +165,9 @@ def test_run():
         Limbe_emerge.Photosynthesis_limbe = photosynthese_limbe_df[photosynthese_limbe_df.index==t_growthwheat]['Photosynthese_nette'].iloc[0]
         Limbe_emerge.Multi_dix_limbe = photosynthese_limbe_df[photosynthese_limbe_df.index==t_growthwheat]['multipli_respi'].iloc[0]
         Zone_cachee.Multi_dix_gaine = photosynthese_gaine_df[photosynthese_gaine_df.index==t_growthwheat]['Multi_dix'].iloc[0]
+
+        if t_growthwheat >= croissance.x_em(croissance.xb()):
+            Limbe_emerge.has_emerged = True
 
         simulation_.run(start_time=t_growthwheat, stop_time=t_growthwheat + growthwheat_ts, number_of_output_steps=number_of_output_steps + 1)
         croissance_postprocessing_df, Zone_cachee_postprocessing_df, Limbe_emerge_postprocessing_df, phloeme_postprocessing_df = simulation_.postprocessings()
@@ -182,15 +192,6 @@ def test_run():
     global_Zone_cachee_df.to_csv(os.path.join(OUTPUTS_DIRPATH, 'Zone_cachee.csv'), na_rep='NA', index=False, float_format='%.{}f'.format(INPUTS_OUTPUTS_PRECISION))
     global_Limbe_emerge_df.to_csv(os.path.join(OUTPUTS_DIRPATH, 'Limbe_emerge.csv'), na_rep='NA', index=False, float_format='%.{}f'.format(INPUTS_OUTPUTS_PRECISION))
     global_phloeme_df.to_csv(os.path.join(OUTPUTS_DIRPATH, 'phloeme.csv'), na_rep='NA', index=False, float_format='%.{}f'.format(INPUTS_OUTPUTS_PRECISION))
-
-
-
-##        global_croissance_df = global_croissance_df.append(croissance_postprocessing_df, ignore_index=True)
-##        global_Zone_cachee_df = global_Zone_cachee_df.append(Zone_cachee_postprocessing_df, ignore_index=True)
-##        global_Limbe_emerge_df = global_Limbe_emerge_df.append(Limbe_emerge_postprocessing_df, ignore_index=True)
-##        global_phloeme_df = global_phloeme_df.append(phloeme_postprocessing_df, ignore_index=True)
-##
-
 
 if __name__ == '__main__':
     test_run()

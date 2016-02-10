@@ -26,6 +26,7 @@ from __future__ import division # use "//" to do integer division
 import numpy as np
 import pandas as pd
 from scipy.integrate import odeint
+from scipy.integrate import ode
 
 import model, parameters # TODO: parameters temporaire
 import logging
@@ -46,9 +47,9 @@ class Simulation(object):
     """
 
     #: the name of the compartments attributes in the model.
-    MODEL_COMPARTMENTS_NAMES = {model.Limbe_emerge: ['Camidon_em', 'Cfruc_em', 'Csuc_em', 'Ctri_em', 'Mstruc_em', 'Naa_em', 'Proteines_em'],
+    MODEL_COMPARTMENTS_NAMES = {model.Limbe_emerge: ['Camidon_em', 'Cfruc_em', 'Csuc_em', 'Ctri_em', 'Naa_em', 'Proteines_em'],
                                 model.phloeme: ['Csuc_phlo', 'Naa_phlo'],
-                                model.Zone_cachee: ['C_respi_croi', 'C_respi_croi', 'Camidon_croi', 'Csuc_pool_croi', 'Ctri_croi', 'Fruc_pool_croi', 'Fruc_pool_E', 'Mstruc_croi', 'Mstruc_E', 'Naa_pool_croi', 'Prot_pool_croi'],
+                                model.Zone_cachee: ['C_respi_croi', 'C_respi_croi', 'Camidon_croi', 'Csuc_pool_croi', 'Ctri_croi', 'Fruc_pool_croi', 'Fruc_pool_E', 'Mstruc_E', 'Naa_pool_croi', 'Prot_pool_croi'],
                                 model.croissance: ['L', 'Le', 'Lem', 'M_em', 'Mstruc_tot', 'S_photoS', 'S_tot', 'W_photoS_bis', 'Wbis', 'x']}
 
 
@@ -206,6 +207,16 @@ class Simulation(object):
 
         soln, infodict = odeint(self._calculate_all_derivatives, self.initial_conditions, t, full_output=True, mxstep=odeint_mxstep)
 
+##        r = ode(self._calculate_all_derivatives).set_integrator('dop853')
+##        r.set_initial_value(self.initial_conditions, start_time)
+##        while r.successful() and r.t < stop_time:
+##            soln = r.integrate(r.t + 1)
+
+
+
+
+
+
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(
                 """Run of the solver DONE: infodict = %s""",
@@ -228,7 +239,7 @@ class Simulation(object):
 
         logger.info('Run of Growth-Wheat from {} to {} DONE'.format(start_time, stop_time))
 
-        return infodict
+        #return infodict
 
 
     def _update_initial_conditions(self):
@@ -286,6 +297,7 @@ class Simulation(object):
             compartments_logger.debug(formatted_initial_conditions)
 
     def _calculate_all_derivatives(self, y, t):
+    #def _calculate_all_derivatives(self, y, t):
         """Compute the derivative of `y` at `t`.
 
         :meth:`_calculate_all_derivatives` is passed as **func** argument to
@@ -374,7 +386,8 @@ class Simulation(object):
         Limbe_emerge.Cfruc_em = y[self.initial_conditions_mapping[Limbe_emerge]['Cfruc_em']]
         Limbe_emerge.Csuc_em = y[self.initial_conditions_mapping[Limbe_emerge]['Csuc_em']]
         Limbe_emerge.Ctri_em = y[self.initial_conditions_mapping[Limbe_emerge]['Ctri_em']]
-        Limbe_emerge.Mstruc_em = y[self.initial_conditions_mapping[Limbe_emerge]['Mstruc_em']]
+        #Limbe_emerge.Mstruc_em = y[self.initial_conditions_mapping[Limbe_emerge]['Mstruc_em']]
+        Limbe_emerge.Mstruc_em = Limbe_emerge.Mstruc_em_df(t)
         Limbe_emerge.Naa_em = y[self.initial_conditions_mapping[Limbe_emerge]['Naa_em']]
         Limbe_emerge.Proteines_em = y[self.initial_conditions_mapping[Limbe_emerge]['Proteines_em']]
 
@@ -388,7 +401,8 @@ class Simulation(object):
         Zone_cachee.Ctri_croi = y[self.initial_conditions_mapping[Zone_cachee]['Ctri_croi']]
         Zone_cachee.Fruc_pool_croi = y[self.initial_conditions_mapping[Zone_cachee]['Fruc_pool_croi']]
         Zone_cachee.Fruc_pool_E = y[self.initial_conditions_mapping[Zone_cachee]['Fruc_pool_E']]
-        Zone_cachee.Mstruc_croi = y[self.initial_conditions_mapping[Zone_cachee]['Mstruc_croi']]
+        #Zone_cachee.Mstruc_croi = y[self.initial_conditions_mapping[Zone_cachee]['Mstruc_croi']]
+        Zone_cachee.Mstruc_croi = Zone_cachee.Mstruc_croi_df(t)
         Zone_cachee.Mstruc_E = y[self.initial_conditions_mapping[Zone_cachee]['Mstruc_E']]
         Zone_cachee.Naa_pool_croi = y[self.initial_conditions_mapping[Zone_cachee]['Naa_pool_croi']]
         Zone_cachee.Prot_pool_croi = y[self.initial_conditions_mapping[Zone_cachee]['Prot_pool_croi']]
@@ -497,7 +511,7 @@ class Simulation(object):
 
         ## Fructan degradation
         Fruc_croi = Zone_cachee.Fruc_croi(Zone_cachee.Fruc_pool_croi, Zone_cachee.Mstruc_croi)
-        D_Fruc_pool_croi = Zone_cachee.D_Fruc_pool_croi(Fruc_croi, parameters.Main.K_Dfructan, parameters.Main.Vmax_Dfructan, Cpool_croi, delta_t)
+        D_Fruc_pool_croi = Zone_cachee.D_Fruc_pool_croi(Fruc_croi, Zone_cachee.Mstruc_croi, parameters.Main.K_Dfructan, parameters.Main.Vmax_Dfructan, Cpool_croi, delta_t)
 
         ## Respi (maintenance)
         Respi = Zone_cachee.Respi(x_em, x, ligulation, Ltot_max, croissance.L, Zone_cachee.Multi_dix_gaine, S_gaine_em, delta_t)
@@ -511,7 +525,7 @@ class Simulation(object):
         PhotoS_gaine = Zone_cachee.PhotoS_gaine(Zone_cachee.Multi_dix_gaine, S_gaine_em, delta_t)
 
         ## Degradation starch
-        Amidon_croi = Zone_cachee.Amidon_croi(Limbe_emerge.Mstruc_em, Zone_cachee.Camidon_croi)
+        Amidon_croi = Zone_cachee.Amidon_croi(Zone_cachee.Mstruc_croi, Zone_cachee.Camidon_croi)
         D_storage_croi = Zone_cachee.D_storage_croi(x_em, x, ligulation, Ltot_max, croissance.L, parameters.Main.delta_Dstorage, Amidon_croi, delta_t)
 
         ## Synthesis starch
@@ -536,64 +550,91 @@ class Simulation(object):
         conv_aa_N = parameters.Main.conv_aa_N
         S_Mstruc_croi_Naa = Zone_cachee.S_Mstruc_croi_Naa(DeltaMstruc, taux_aa, conv_aa_N)
 
-        ## Export of Mstruct towards emerged lamina
-        Export_Mstruc_croi = Zone_cachee.Export_Mstruc_croi(x_em, x, croissance.L, ligulation, Ltot_max, parameters.Main.correction_m, deltaS_photoS, SSLW)
+        if Limbe_emerge.has_emerged:
+            ## Export of Mstruct towards emerged lamina
+            Export_Mstruc_croi = Zone_cachee.Export_Mstruc_croi(croissance.L, ligulation, Ltot_max, parameters.Main.correction_m, deltaS_photoS, SSLW)
 
-        ## Export of AA towards emerged lamina
-        Export_Naa_pool_croi = Zone_cachee.Export_Naa_pool_croi(Export_Mstruc_croi, Npool_croi)
+            ## Export of AA towards emerged lamina
+            Export_Naa_pool_croi = Zone_cachee.Export_Naa_pool_croi(Export_Mstruc_croi, Npool_croi)
 
-        ## Export of sucrose towards emerged lamina
-        Export_Csuc_pool_croi = Zone_cachee.Export_Csuc_pool_croi(x_em, x, Cpool_croi, Export_Mstruc_croi)
+            ## Export of sucrose towards emerged lamina
+            Export_Csuc_pool_croi = Zone_cachee.Export_Csuc_pool_croi(Cpool_croi, Export_Mstruc_croi)
 
-        # limbe emerge
-        ## Export of sucrose towards zone cachee
-        C_em = Limbe_emerge.C_em(x_em, x, Limbe_emerge.Mstruc_em, Limbe_emerge.Csuc_em)
-        Export_Csuc_em = Limbe_emerge.Export_Csuc_em(x_em, x, xend, C_em, Cpool_croi, parameters.Main.q, Limbe_emerge.Mstruc_em, parameters.Main.conductance, delta_t)
+            # limbe emerge
+            ## Export of sucrose towards zone cachee
+            C_em = Limbe_emerge.C_em(Limbe_emerge.Mstruc_em, Limbe_emerge.Csuc_em)
+            Export_Csuc_em = Limbe_emerge.Export_Csuc_em(x, xend, C_em, Cpool_croi, parameters.Main.q, Limbe_emerge.Mstruc_em, parameters.Main.conductance, delta_t)
 
-        ## Export of AA towards zone cachee
-        N_em = Limbe_emerge.N_em(Limbe_emerge.Mstruc_em, Limbe_emerge.Naa_em)
-        Export_Naa_em = Limbe_emerge.Export_Naa_em(Limbe_emerge.Mstruc_em, x, xend, N_em, Npool_croi, parameters.Main.q, Zone_cachee.Mstruc_croi, parameters.Main.conductance, delta_t)
+            ## Export of AA towards zone cachee
+            N_em = Limbe_emerge.N_em(Limbe_emerge.Mstruc_em, Limbe_emerge.Naa_em)
+            Export_Naa_em = Limbe_emerge.Export_Naa_em(Limbe_emerge.Mstruc_em, x, xend, N_em, Npool_croi, parameters.Main.q, Zone_cachee.Mstruc_croi, parameters.Main.conductance, delta_t)
 
-        ## Loading sucrose in phloem
-        Limbe_emerge.Loaded_Csuc_em = Limbe_emerge.Loading_Csuc_em(xend, x, C_em, Cphlo, parameters.Main.q, Limbe_emerge.Mstruc_em, parameters.Main.conductance, delta_t)
+            ## Loading sucrose in phloem
+            Limbe_emerge.Loaded_Csuc_em = Limbe_emerge.Loading_Csuc_em(xend, x, C_em, Cphlo, parameters.Main.q, Limbe_emerge.Mstruc_em, parameters.Main.conductance, delta_t)
 
-        ## Loading AA in phloem
-        Limbe_emerge.Loaded_Naa_em = Limbe_emerge.Loading_Naa_em(xend, x, N_em, Nphlo, parameters.Main.q, Zone_cachee.Mstruc_croi, parameters.Main.conductance, delta_t)
+            ## Loading AA in phloem
+            Limbe_emerge.Loaded_Naa_em = Limbe_emerge.Loading_Naa_em(xend, x, N_em, Nphlo, parameters.Main.q, Zone_cachee.Mstruc_croi, parameters.Main.conductance, delta_t)
 
-        ## Synthesis proteins
-        S_prot_em = Limbe_emerge.S_prot_em(Limbe_emerge.Mstruc_em, parameters.Main.Vmax_Sprotein, N_em, parameters.Main.K_Sprotein, delta_t)
+            ## Synthesis proteins
+            S_prot_em = Limbe_emerge.S_prot_em(Limbe_emerge.Mstruc_em, parameters.Main.Vmax_Sprotein, N_em, parameters.Main.K_Sprotein, delta_t)
 
-        ## Degradation proteins
-        Prot_em = Limbe_emerge.Prot_em(Limbe_emerge.Mstruc_em, Limbe_emerge.Proteines_em)
-        D_prot_em = Limbe_emerge.D_prot_em(Limbe_emerge.Mstruc_em, parameters.Main.delta_Dproteins, Prot_em, delta_t)
+            ## Degradation proteins
+            Prot_em = Limbe_emerge.Prot_em(Limbe_emerge.Mstruc_em, Limbe_emerge.Proteines_em)
+            D_prot_em = Limbe_emerge.D_prot_em(Limbe_emerge.Mstruc_em, parameters.Main.delta_Dproteins, Prot_em, delta_t)
 
-        ## Synthesis AA
-        Tri = Limbe_emerge.Tri(Limbe_emerge.Mstruc_em, Limbe_emerge.Ctri_em)
-        S_amino_acids = Limbe_emerge.S_amino_acids(parameters.Main.Vmax_aa, Tri, parameters.Main.K_Saa_trioses, delta_t)
-        S_amino_acidsC_limbe = Limbe_emerge.S_amino_acidsC_limbe(S_amino_acids, parameters.Main.conv_aa_C, parameters.Main.conv_aa_N)
+            ## Synthesis AA
+            Tri = Limbe_emerge.Tri(Limbe_emerge.Mstruc_em, Limbe_emerge.Ctri_em)
+            S_amino_acids = Limbe_emerge.S_amino_acids(parameters.Main.Vmax_aa, Tri, parameters.Main.K_Saa_trioses, delta_t)
+            S_amino_acidsC_limbe = Limbe_emerge.S_amino_acidsC_limbe(S_amino_acids, parameters.Main.conv_aa_C, parameters.Main.conv_aa_N)
 
-        ## Photosynthesis emerged lamina
-        PhotoS = Limbe_emerge.PhotoS(x_em, x, Limbe_emerge.Photosynthesis_limbe, croissance.S_photoS, delta_t)
+            ## Photosynthesis emerged lamina
+            PhotoS = Limbe_emerge.PhotoS(x_em, x, Limbe_emerge.Photosynthesis_limbe, croissance.S_photoS, delta_t)
 
-        ## Respiration
-        Respi = Limbe_emerge.Respi(x_em, x, Limbe_emerge.Multi_dix_limbe, croissance.S_photoS, delta_t)
+            ## Respiration
+            Respi = Limbe_emerge.Respi(x_em, x, Limbe_emerge.Multi_dix_limbe, croissance.S_photoS, delta_t)
 
-        ## Synthesis sucrose
-        S_sucrose = Limbe_emerge.S_sucrose(x_em, x, Tri, parameters.Main.Vmax_sucrose, parameters.Main.K_sucrose, delta_t)
+            ## Synthesis sucrose
+            S_sucrose = Limbe_emerge.S_sucrose(x_em, x, Tri, parameters.Main.Vmax_sucrose, parameters.Main.K_sucrose, delta_t)
 
-        ## Synthesis starch
-        S_storage = Limbe_emerge.S_storage(x_em, x, Tri, parameters.Main.Vmax_storage, parameters.Main.K_storage, delta_t)
+            ## Synthesis starch
+            S_storage = Limbe_emerge.S_storage(x_em, x, Tri, parameters.Main.Vmax_storage, parameters.Main.K_storage, delta_t)
 
-        ## Degradation starch
-        Amidon = Limbe_emerge.Amidon(Limbe_emerge.Mstruc_em, Limbe_emerge.Camidon_em)
-        D_storage = Limbe_emerge.D_storage(x_em, x, parameters.Main.delta_Dstorage, Amidon, delta_t)
+            ## Degradation starch
+            Amidon = Limbe_emerge.Amidon(Limbe_emerge.Mstruc_em, Limbe_emerge.Camidon_em)
+            D_storage = Limbe_emerge.D_storage(x_em, x, parameters.Main.delta_Dstorage, Amidon, delta_t)
 
-        ## Synthesis fructans
-        Regul_Sfructanes_limbe = Limbe_emerge.Regul_Sfructanes_limbe(parameters.Main.Vmax_Regul_Sfructans, parameters.Main.K_Regul_Sfructans, parameters.Main.n_Regul_Sfructans, Limbe_emerge.Loaded_Csuc_em, Export_Csuc_em)
-        S_fruc_em = Limbe_emerge.S_fruc_em(x_em, x, C_em, parameters.Main.n_Sfructans, parameters.Main.Vmax_Sfructans, parameters.Main.K_Sfructans, delta_t, Regul_Sfructanes_limbe)
+            ## Synthesis fructans
+            Regul_Sfructanes_limbe = Limbe_emerge.Regul_Sfructanes_limbe(parameters.Main.Vmax_Regul_Sfructans, parameters.Main.K_Regul_Sfructans, parameters.Main.n_Regul_Sfructans, Limbe_emerge.Loaded_Csuc_em, Export_Csuc_em)
+            S_fruc_em = Limbe_emerge.S_fruc_em(x_em, x, C_em, parameters.Main.n_Sfructans, parameters.Main.Vmax_Sfructans, parameters.Main.K_Sfructans, delta_t, Regul_Sfructanes_limbe)
 
-        ## Degradation fructans
-        D_fruc_em = Limbe_emerge.D_fruc_em(x_em, x, Limbe_emerge.Cfruc_em, parameters.Main.K_Dfructan, parameters.Main.Vmax_Dfructan, C_em, delta_t)
+            ## Degradation fructans
+            fruc_em = Limbe_emerge.Fruc_em(Limbe_emerge.Mstruc_em, Limbe_emerge.Cfruc_em)
+            D_fruc_em = Limbe_emerge.D_fruc_em(x_em, x, fruc_em, parameters.Main.K_Dfructan, parameters.Main.Vmax_Dfructan, C_em, delta_t)
+
+        else:
+            # Zone_cachee
+            ## Export of Mstruct towards emerged lamina
+            Export_Mstruc_croi = 0
+
+            ## Export of AA towards emerged lamina
+            Export_Naa_pool_croi = 0
+
+            ## Export of sucrose towards emerged lamina
+            Export_Csuc_pool_croi = 0
+
+            # limbe emerge
+            ## Export of sucrose towards zone cachee
+            Export_Csuc_em = 0
+
+            ## Export of AA towards zone cachee
+            Export_Naa_em = 0
+
+            ## Loading sucrose in phloem
+            Limbe_emerge.Loaded_Csuc_em = 0
+
+            ## Loading AA in phloem
+            Limbe_emerge.Loaded_Naa_em = 0
+
 
         # compute the derivative
         ## croissance
@@ -616,25 +657,38 @@ class Simulation(object):
         y_derivatives[self.initial_conditions_mapping[Zone_cachee]['Mstruc_E']] = Zone_cachee.calculate_Mstruc_E_derivative(x, xE, S_Mstruc_croi_Naa, parameters.Main.MN, S_Mstruc_croi_Csuc, parameters.Main.MC, parameters.Main.conv_aa_C, parameters.Main.conv_aa_N)
         y_derivatives[self.initial_conditions_mapping[Zone_cachee]['Csuc_pool_croi']] = Zone_cachee.calculate_Csuc_pool_croi_derivative(Zone_cachee.Unloaded_Csuc_phlo, S_Mstruc_croi_Csuc, Respiration, S_Fruc_pool_croi, Zone_cachee.Mstruc_croi, D_Fruc_pool_croi, Export_Csuc_pool_croi, Export_Csuc_em, S_sucrose_croi, D_storage_croi, Respi)
         y_derivatives[self.initial_conditions_mapping[Zone_cachee]['C_respi_croi']] = Zone_cachee.calculate_C_respi_croi_derivative(Respiration, parameters.Main.Msuc)
-        y_derivatives[self.initial_conditions_mapping[Zone_cachee]['Mstruc_croi']] = Zone_cachee.calculate_Mstruc_croi_derivative(x_em, x, S_Mstruc_croi_Naa, parameters.Main.MN, S_Mstruc_croi_Csuc, parameters.Main.MC, parameters.Main.conv_aa_C, parameters.Main.conv_aa_N, Export_Mstruc_croi)
+        #y_derivatives[self.initial_conditions_mapping[Zone_cachee]['Mstruc_croi']] = Zone_cachee.calculate_Mstruc_croi_derivative(x_em, x, S_Mstruc_croi_Naa, parameters.Main.MN, S_Mstruc_croi_Csuc, parameters.Main.MC, parameters.Main.conv_aa_C, parameters.Main.conv_aa_N, Export_Mstruc_croi)
         y_derivatives[self.initial_conditions_mapping[Zone_cachee]['Naa_pool_croi']] = Zone_cachee.calculate_Naa_pool_croi_derivative(Zone_cachee.Unloaded_Naa_phlo, S_Mstruc_croi_Naa, S_Prot_pool_croi, Zone_cachee.Mstruc_croi, D_Prot_pool_croi, Export_Naa_pool_croi, Export_Naa_em)
         y_derivatives[self.initial_conditions_mapping[Zone_cachee]['Prot_pool_croi']] = Zone_cachee.calculate_Prot_pool_croi_derivative(S_Prot_pool_croi, Zone_cachee.Mstruc_croi, D_Prot_pool_croi)
 
         ## Limbe emerge
-        y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Ctri_em']] = Limbe_emerge.calculate_Ctri_em_derivative(x_em, x, PhotoS, S_sucrose, S_storage, S_amino_acidsC_limbe, Limbe_emerge.Mstruc_em)
-        y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Camidon_em']] = Limbe_emerge.calculate_Camidon_em_derivative(Limbe_emerge.Mstruc_em, S_storage, D_storage)
-        y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Cfruc_em']] = Limbe_emerge.calculate_Cfruc_em_derivative(S_fruc_em, D_fruc_em, Limbe_emerge.Mstruc_em)
-        y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Csuc_em']] = Limbe_emerge.calculate_Csuc_em_derivative(x_em, x, Export_Csuc_pool_croi, Export_Csuc_em, S_sucrose, D_storage, Limbe_emerge.Mstruc_em, Limbe_emerge.Loaded_Csuc_em, Respi, D_fruc_em, S_fruc_em)
-        y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Mstruc_em']] = Limbe_emerge.calculate_Mstruc_em_derivative(Export_Mstruc_croi)
-        y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Naa_em']] = Limbe_emerge.calculate_Naa_em_derivative(Limbe_emerge.Mstruc_em, Export_Naa_pool_croi, Export_Naa_em, Limbe_emerge.Loaded_Naa_em, S_prot_em, D_prot_em, S_amino_acids)
-        y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Proteines_em']] = Limbe_emerge.calculate_Proteines_em_derivative(S_prot_em, D_prot_em, Limbe_emerge.Mstruc_em)
+        if Limbe_emerge.has_emerged:
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Ctri_em']] = Limbe_emerge.calculate_Ctri_em_derivative(x_em, x, PhotoS, S_sucrose, S_storage, S_amino_acidsC_limbe, Limbe_emerge.Mstruc_em)
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Camidon_em']] = Limbe_emerge.calculate_Camidon_em_derivative(Limbe_emerge.Mstruc_em, S_storage, D_storage)
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Cfruc_em']] = Limbe_emerge.calculate_Cfruc_em_derivative(S_fruc_em, D_fruc_em, Limbe_emerge.Mstruc_em)
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Csuc_em']] = Limbe_emerge.calculate_Csuc_em_derivative(x_em, x, Export_Csuc_pool_croi, Export_Csuc_em, S_sucrose, D_storage, Limbe_emerge.Mstruc_em, Limbe_emerge.Loaded_Csuc_em, Respi, D_fruc_em, S_fruc_em)
+            #y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Mstruc_em']] = Limbe_emerge.calculate_Mstruc_em_derivative(Export_Mstruc_croi)
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Naa_em']] = Limbe_emerge.calculate_Naa_em_derivative(Limbe_emerge.Mstruc_em, Export_Naa_pool_croi, Export_Naa_em, Limbe_emerge.Loaded_Naa_em, S_prot_em, D_prot_em, S_amino_acids)
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Proteines_em']] = Limbe_emerge.calculate_Proteines_em_derivative(S_prot_em, D_prot_em, Limbe_emerge.Mstruc_em)
+        else:
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Ctri_em']] = 0
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Camidon_em']] = 0
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Cfruc_em']] = 0
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Csuc_em']] = 0
+            #y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Mstruc_em']] = Limbe_emerge.calculate_Mstruc_em_derivative(Export_Mstruc_croi)
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Naa_em']] = 0
+            y_derivatives[self.initial_conditions_mapping[Limbe_emerge]['Proteines_em']] = 0
 
         ## phloeme (FLUX AVEC ORGANES IGNORES POUR PHLOEME)
         y_derivatives[self.initial_conditions_mapping[phloeme]['Csuc_phlo']] = phloeme.calculate_Csuc_phlo_derivative(x_em, x, t)
         y_derivatives[self.initial_conditions_mapping[phloeme]['Naa_phlo']] = phloeme.calculate_Naa_phlo_derivative(t_em, t)
 
-        return y_derivatives
+        derivatives_logger = logging.getLogger('growthwheat.derivatives')
+        if derivatives_logger.isEnabledFor(logging.DEBUG):
+            self._log_compartments(t, y_derivatives, Simulation.LOGGERS_NAMES['derivatives'])
 
+
+        return y_derivatives
 
     def _update_population(self, compartments_values):
         """Update the state of :attr:`population` from the values in `compartments_values`.
@@ -719,19 +773,20 @@ class Simulation(object):
         Zone_cachee_df['Mstruc_E'] = solver_output_transposed[self.initial_conditions_mapping[Zone_cachee]['Mstruc_E']]
         Zone_cachee_df['Csuc_pool_croi'] = solver_output_transposed[self.initial_conditions_mapping[Zone_cachee]['Csuc_pool_croi']]
         Zone_cachee_df['C_respi_croi'] = solver_output_transposed[self.initial_conditions_mapping[Zone_cachee]['C_respi_croi']]
-        Zone_cachee_df['Mstruc_croi'] = solver_output_transposed[self.initial_conditions_mapping[Zone_cachee]['Mstruc_croi']]
+        #Zone_cachee_df['Mstruc_croi'] = solver_output_transposed[self.initial_conditions_mapping[Zone_cachee]['Mstruc_croi']]
         Zone_cachee_df['Naa_pool_croi'] = solver_output_transposed[self.initial_conditions_mapping[Zone_cachee]['Naa_pool_croi']]
         Zone_cachee_df['Prot_pool_croi'] = solver_output_transposed[self.initial_conditions_mapping[Zone_cachee]['Prot_pool_croi']]
 
         Cpool_croi = map(Zone_cachee.Cpool_croi, Zone_cachee_df['Csuc_pool_croi'], Zone_cachee_df['Mstruc_croi'])
-        Zone_cachee_df['D_Fruc_pool_croi'] = map(Zone_cachee.D_Fruc_pool_croi, Zone_cachee_df['Fruc_pool_croi'], [parameters.Main.K_Dfructan]* len(self._time_grid), [parameters.Main.Vmax_Dfructan]* len(self._time_grid), Cpool_croi, [3600]* len(self._time_grid))
+        Zone_cachee_df['D_Fruc_pool_croi'] = map(Zone_cachee.D_Fruc_pool_croi, Zone_cachee_df['Fruc_pool_croi'], Zone_cachee_df['Mstruc_croi'], [parameters.Main.K_Dfructan]* len(self._time_grid), [parameters.Main.Vmax_Dfructan]* len(self._time_grid), Cpool_croi, [3600]* len(self._time_grid))
 
         # format Limbe emerge output
         Limbe_emerge_df['Ctri_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Ctri_em']]
         Limbe_emerge_df['Camidon_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Camidon_em']]
         Limbe_emerge_df['Cfruc_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Cfruc_em']]
         Limbe_emerge_df['Csuc_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Csuc_em']]
-        Limbe_emerge_df['Mstruc_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Mstruc_em']]
+        #Limbe_emerge_df['Mstruc_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Mstruc_em']]
+        Limbe_emerge_df['Naa_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Naa_em']]
         Limbe_emerge_df['Proteines_em'] = solver_output_transposed[self.initial_conditions_mapping[Limbe_emerge]['Proteines_em']]
 
         # set the order of the columns
