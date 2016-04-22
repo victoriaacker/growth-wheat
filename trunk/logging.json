@@ -51,10 +51,10 @@
             "mode": "w",
             "formatter": "simple"
         },
-        "Zone_cachee_compartments_file": {
+        "HiddenGrowingZone_compartments_file": {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "Zone_cachee_compartments.csv",
+            "filename": "HiddenGrowingZone_compartments.csv",
             "maxBytes": 10485760,
             "backupCount": 20,
             "mode": "w",
@@ -87,10 +87,10 @@
             "mode": "w",
             "formatter": "simple"
         },
-        "Zone_cachee_derivatives_file": {
+        "HiddenGrowingZone_derivatives_file": {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "Zone_cachee_derivatives.csv",
+            "filename": "HiddenGrowingZone_derivatives.csv",
             "maxBytes": 10485760,
             "backupCount": 20,
             "mode": "w",
@@ -133,9 +133,9 @@
                 "phloeme_compartments_file"
             ]
         },
-        "growthwheat.compartments.Zone_cachee": {
+        "growthwheat.compartments.HiddenGrowingZone": {
             "handlers": [
-                "Zone_cachee_compartments_file"
+                "HiddenGrowingZone_compartments_file"
             ]
         },
         "growthwheat.compartments.croissance": {
@@ -156,9 +156,9 @@
                 "phloeme_derivatives_file"
             ]
         },
-        "growthwheat.derivatives.Zone_cachee": {
+        "growthwheat.derivatives.HiddenGrowingZone": {
             "handlers": [
-                "Zone_cachee_derivatives_file"
+                "HiddenGrowingZone_derivatives_file"
             ]
         },
         "growthwheat.derivatives.croissance": {

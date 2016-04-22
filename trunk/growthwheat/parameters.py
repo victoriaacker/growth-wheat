@@ -1,5 +1,7 @@
 # -*- coding: latin-1 -*-
 
+from __future__ import division # use "//" to do integer division
+
 """
     growthwheat.parameters
     ~~~~~~~~~~~~~~~~~~~~~~
@@ -21,81 +23,33 @@
         $Id$
 """
 
-t = 800
+hour_to_second_conversion_factor = 3600. #: TODO: temporary
 
-class Main:
-    alpha_mass_growth = 1.73e-05
-    beta_mass_growth = 1.74
-    C_contents_roots = 0.96
-    conductance = 8e-05
-    conv_aa_C = 4.15
-    conv_aa_N = 1.25
-    conv_suc_C = 12
-    correction_m = 0.416
-    delta_Dproteins = 1.85e-06
-    delta_Dstorage = 0.0001
-    delta_t = 3600
-    K_Dfructan = 100
-    K_Regul_Sfructans = 0.5
-    K_Saa_nitrates = 3
-    K_Saa_trioses = 0.2
-    K_Sfructans = 5000
-    K_Sprotein = 100
-    K_storage = 20
-    K_sucrose = 0.66
-    Kc = 350
-    Kn = 40
-    Ksslw = 10000
-    L0 = 0.04
-    Maa = 6.86e-05
-    Mass_plant = 0.25
-    max_SSLW = 5e-05
-    MC = 1.2e-05
-    min_SSLW = 2.2e-05
-    MN = 1.4e-05
-    Msuc = 0.000144
-    N_feuille = 5
-    n_Regul_Sfructans = 15
-    n_Sfructans = 3
-    p1 = 0
-    q = 1
-    Rdark = 1e-06
-    RERmax = 4e-06
-    respi_roots = 60
-    rg_feuille = 3
-    S_R_ratio = 5
-    taux_respi = 890
-    tE = 300
-    Vmax_aa = 1
-    Vmax_Dfructan = 0.035
-    Vmax_Regul_Sfructans = 1
-    Vmax_Sfructans = 0.2
-    Vmax_Sprotein = 0.002
-    Vmax_storage = 2
-    Vmax_sucrose = 1
-
-    
-class croissance:
-    c1 = 0.56
-    c2 = 268274
-    EC_wmax = 0.3
-    Klig = 0.6
-    n_wmax_suc = 3
-    ratio_Mstruc = 0.8
-    Y0 = 137
-
-
-class Limbe_emerge:
-    pass
-    
-
-class phloeme:
-    pass
-
-
-class Zone_cachee:
-    pass
-
-
-
-
+c1 = 0.56 #: Coeeficient de forme, partie distale de la feuille (SU)
+c2 = 268274 #: Coefficient de forme de la feuille. Partie basale de la feuille (SU)
+EC_wmax = 0.3 #: variation de + ou - 15% de maximal leaf width (SU)
+Klig = 0.6 #: ratio reliant la largeur maximale et la largeur de la gaine
+alpha_mass_growth = 1.73e-05 # Paramètre de croissance massique. Utilisé dans la relation de puissance entre la longueur L et la matiere seche. g.mm^(-beta). Issu Williams (1975).
+beta_mass_growth = 1.74 # Paramètre de croissance massique. Utilisé dans la relation de puissance entre la longueur L et la matiere seche. Issu Williams (1975).
+RATIO_MSTRUCT_DM = 0.8 #: Ratio Mstruc/Mseche
+Y0 = 137 #: Facteur agrandissement feuille en mode automate (SU)
+ligulation = 0.9 #: pourcentage de longueur totale auquel à lieu la ligulation et donc l'arrêt de la croissance du limbe (et de la partie émergée).
+                 #: Par exemple, on peut considérer que la zone émergée (futur limbe) cesse de grandir lorque l'on atteint 90% de la longueur totale de la feuille.
+Ksslw = 10000 #: Affinité SSLW aux fructanes
+Kc = 350 #: affinité du RER au C (µmol/g)
+Kn = 40 #: affinité du RER à N (µmol/g)
+L0 = 0.04 #: Initial leaf length (mm)
+min_SSLW = 2.2e-05 #: g/mm²
+max_SSLW = 5e-05 #: g/mm²
+N_feuille = 5 #:rang de la feuille
+RERmax = 4e-06 #: s-1
+taux_respi = 890 #: Taux de respiration due à l'accroissement de la feuille (µmol sucrose respiré / g créé). Cela fait env. 0.13g de C perdu par respi pour 1 g de mstruct creee
+xb = 0
+x_em = xb + 100
+xmax = 120
+xend = 300
+Swmax = -N_feuille / 30 + 103 / 150 # 'Param pour Position de Wmax le long du limbe
+RATIO_CN_MSTRUCT = 0.416 #: Pourcentage de masse structurale dûe uniquement aux atomes de C et de N (SU)
+ratio_sucrose_mstruct =  58656.667      #: Amount of C sucrose (µmol C) in 1 g of mstruct (of CN), calculation = ( (92.3e-2)/(12) - (7.7*4.15e-2)/(14*1.25) ) *1e6
+ratio_amino_acids_mstruct = 5500.0      #: Amount of N amino acids (µmol N) in 1 g of mstruct (of CN), calculation = (7.7e-2)/(14)* 1e6
+NB_C_SUCROSE = 12                       #: Number of C in 1 mol of sucrose
