@@ -33,7 +33,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from growthwheat import model, simulation, simulation, converter
+from growthwheat import model, simulation, converter
 
 INPUTS_DIRPATH = 'inputs'
 HGZ_INPUTS_FILENAME = 'hgz_inputs.csv'

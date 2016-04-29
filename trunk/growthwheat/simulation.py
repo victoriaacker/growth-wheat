@@ -139,7 +139,7 @@ class Simulation(object):
                 delta_mstruct = model.calculate_delta_mstruct_postE(curr_hgz_outputs['leaf_SSLW'], delta_leaf_area)
 
                 # Emerged lamina
-                lamina_id = hgz_id + tuple(['lamina'])
+                lamina_id = hgz_id + tuple(['blade'])
                 if curr_hgz_outputs['leaf_is_emerged'] and all_elements_inputs[lamina_id]['is_growing']:
                     curr_element_outputs = all_elements_outputs[lamina_id]
                     # curr_element_outputs.update([(lamina_input_name, lamina_input_value) for lamina_input_name, lamina_input_value in all_elements_inputs[lamina_id].iteritems() if lamina_input_name in ELEMENT_OUTPUTS])

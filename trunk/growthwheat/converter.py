@@ -35,8 +35,8 @@ from openalea.mtg import io, fat_mtg
 import simulation
 
 #: the columns which define the topology in the input/output dataframe
-HGZ_TOPOLOGY_COLUMNS = ['plant', 'axis', 'phytomer']
-ELEMENT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'phytomer', 'organ'] # exposed elements
+HGZ_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer']
+ELEMENT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ'] # exposed elements
 
 
 def from_dataframe(hgz_inputs_df, element_inputs_df):
@@ -78,10 +78,10 @@ def from_dataframe(hgz_inputs_df, element_inputs_df):
         all_hgz_dict[hgz_inputs_id] = hgz_inputs_dict
 
         # previous sheath
-        index_phytomer = hgz_inputs_id[-1]
-        previous_sheath_id = tuple(list(hgz_inputs_id[:2]) + [index_phytomer - 1] + ['sheath'])
+        index_metamer = hgz_inputs_id[-1]
+        previous_sheath_id = tuple(list(hgz_inputs_id[:2]) + [index_metamer - 1] + ['sheath'])
         if sheath_inputs_grouped.groups.has_key(previous_sheath_id):
-            last_previous_sheath_id = previous_sheath_id # should always pass here because the first phytomer of each axis always has a previous sheath
+            last_previous_sheath_id = previous_sheath_id # should always pass here because the first metamer of each axis always has a previous sheath
         hgz_to_prev_sheath_dict[hgz_inputs_id] = last_previous_sheath_id # use the last previous sheath found
 
     return {'hgz': all_hgz_dict, 'elements': all_element_dict, 'previous_sheaths': hgz_to_prev_sheath_dict}
