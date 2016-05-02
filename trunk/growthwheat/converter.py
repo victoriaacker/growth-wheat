@@ -86,7 +86,7 @@ def from_dataframes(hgz_inputs_df, element_inputs_df):
 
     return {'hgz': all_hgz_dict, 'elements': all_element_dict, 'previous_sheaths': hgz_to_prev_sheath_dict}
 
-def to_dataframe(data_dict):
+def to_dataframes(data_dict):
     """
     TODO
 

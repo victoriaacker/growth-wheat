@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # run the simulation
     simulation_.run()
     # convert the outputs to Pandas dataframe
-    hgz_outputs_df, element_outputs_df = converter.to_dataframe(simulation_.outputs)
+    hgz_outputs_df, element_outputs_df = converter.to_dataframes(simulation_.outputs)
     # write the dataframe to CSV
     hgz_outputs_df.to_csv(os.path.join(OUTPUTS_DIRPATH, HGZ_OUTPUTS_FILENAME), index=False, na_rep='NA', float_format='%.{}f'.format(OUTPUTS_PRECISION))
     element_outputs_df.to_csv(os.path.join(OUTPUTS_DIRPATH, ELEMENT_OUTPUTS_FILENAME), index=False, na_rep='NA', float_format='%.{}f'.format(OUTPUTS_PRECISION))
