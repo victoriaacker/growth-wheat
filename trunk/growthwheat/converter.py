@@ -39,7 +39,7 @@ HGZ_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer']
 ELEMENT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ'] # exposed elements
 
 
-def from_dataframe(hgz_inputs_df, element_inputs_df):
+def from_dataframes(hgz_inputs_df, element_inputs_df):
     """
     Convert inputs/outputs from Pandas dataframe to Growth-Wheat format.
     The column names of the dataframe respect the naming convention of AdelWheat.

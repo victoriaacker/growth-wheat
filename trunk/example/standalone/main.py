@@ -56,7 +56,7 @@ if __name__ == '__main__':
     hgz_inputs_df = pd.read_csv(os.path.join(INPUTS_DIRPATH, HGZ_INPUTS_FILENAME))
     element_inputs_df = pd.read_csv(os.path.join(INPUTS_DIRPATH, ELEMENT_INPUTS_FILENAME))
     # convert the dataframe to simulation inputs format
-    inputs = converter.from_dataframe(hgz_inputs_df, element_inputs_df)
+    inputs = converter.from_dataframes(hgz_inputs_df, element_inputs_df)
     # initialize the simulation with the inputs
     simulation_.initialize(inputs)
     # run the simulation
