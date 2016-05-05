@@ -100,12 +100,12 @@ class Simulation(object):
             export_mstruct, export_sucrose, export_amino_acids = 0, 0, 0
 
             # Found previous hidden growing zone
-            if hgz_id == (1, 'MS', 4):
-                prev_leaf_emerged = True
-            else:
-                prev_hgz_id = tuple(list(hgz_id[:2]) + [hgz_id[2] - 1])
+            prev_hgz_id = tuple(list(hgz_id[:2]) + [hgz_id[2] - 1])
+            if prev_hgz_id in all_hgz_inputs:
                 prev_leaf_emerged = all_hgz_inputs[prev_hgz_id]['leaf_is_emerged']
-
+            else:
+                prev_leaf_emerged = True
+                
             if not prev_leaf_emerged: # Before the emergence of the previous leaf. Exponential-like growth.
                 ## delta_leaf_L
                 delta_leaf_L = model.calculate_deltaL_preE(hgz_inputs['sucrose'], hgz_inputs['leaf_L'], hgz_inputs['amino_acids'], hgz_inputs['mstruct'], self.delta_t)
