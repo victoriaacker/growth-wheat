@@ -197,14 +197,14 @@ def calculate_leaf_SSLW(conc_fructan_em_prev):
     :Returns Type:
         :class:`float`
     """
-    return (parameters.min_SSLW + (parameters.max_SSLW - parameters.min_SSLW) * conc_fructan_em_prev/ (conc_fructan_em_prev + parameters.Ksslw))
+    return parameters.min_SSLW + (parameters.max_SSLW - parameters.min_SSLW) * conc_fructan_em_prev/ (conc_fructan_em_prev + parameters.Ksslw)
 
 def calculate_leaf_W(leaf_L, leaf_Lwmax, leaf_Wmax, lamina_Lmax, leaf_Wlig, leaf_Lmax):
     """ Leaf width at leaf base (from Dornbush et al., 2011).
 
     :Parameters:
         - `leaf_L` (:class:`float`) - Total leaf length (mm)
-        - `leaf_Lwmax` (:class:`float`) - Position of the maximal leaf width (leaf_Wmax) along the lamina (mm)
+        - `leaf_Lwmax` (:class:`float`) - Position of the maximal leaf width (leaf_Wmax) along the leaf (mm)
         - `leaf_Wmax` (:class:`float`) - Maximal leaf width (mm)
         - `lamina_Lmax` (:class:`float`) - Maximal lamina length (mm)
         - `leaf_Wlig` (:class:`float`) - Lamina width at ligule position (mm)
@@ -369,12 +369,10 @@ def calculate_delta_lamina_W(lamina_L, leaf_Lwmax, leaf_Wmax, delta_leaf_L, lami
     return delta_lamina_W
 
 
-def calculate_delta_lamina_area(leaf_L, leaf_Lmax, delta_leaf_L, lamina_W, delta_lamina_W):
+def calculate_delta_lamina_area(delta_leaf_L, lamina_W, delta_lamina_W):
     """ delta lamina area.
 
     :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (mm)
-        - `leaf_Lmax` (:class:`float`) - Final leaf length (mm)
         - `delta_leaf_L` (:class:`float`) - delta of leaf length (mm)
         - `lamina_W` (:class:`float`) - lamina width (mm)
         - `delta_lamina_W` (:class:`float`) - Delta lamina width (mm)
@@ -383,9 +381,8 @@ def calculate_delta_lamina_area(leaf_L, leaf_Lmax, delta_leaf_L, lamina_W, delta
     :Returns Type:
         :class:`float`
     """
-    if leaf_L < (parameters.ligulation * leaf_Lmax):
-        return delta_leaf_L * (lamina_W + delta_lamina_W)
-    return 0
+    return delta_leaf_L * (lamina_W + delta_lamina_W)
+
 
 def calculate_export_mstruct(delta_lamina_area, leaf_SSLW):
     """Export of structural dry mass from the hidden growing zone towards the emerged part of the lamina integrated over delta_t (CN g mstruct exported over delta_t).

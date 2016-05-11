@@ -157,7 +157,7 @@ class Simulation(object):
                     delta_lamina_W  = model.calculate_delta_lamina_W(lamina_L, curr_hgz_outputs['leaf_Lwmax'], curr_hgz_outputs['leaf_Wmax'], delta_leaf_L, curr_hgz_outputs['lamina_Lmax'], curr_hgz_outputs['leaf_Wlig'])
 
                     ## Delta of lamina area
-                    delta_lamina_area = model.calculate_delta_lamina_area(curr_hgz_outputs['leaf_L'], curr_hgz_outputs['leaf_Lmax'], delta_leaf_L, lamina_W, delta_lamina_W)
+                    delta_lamina_area = model.calculate_delta_lamina_area(delta_leaf_L, lamina_W, delta_lamina_W)
 
                     ## Export of mstruct from hgz towards the emerged lamina
                     export_mstruct = model.calculate_export_mstruct(delta_lamina_area, curr_hgz_outputs['leaf_SSLW'])

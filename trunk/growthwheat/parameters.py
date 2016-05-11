@@ -48,7 +48,7 @@ xb = 0
 x_em = xb + 100
 xmax = 120
 xend = 300
-Swmax = -N_feuille / 30 + 103 / 150 # 'Param pour Position de Wmax le long du limbe
+Swmax = (-N_feuille / 30) + (103 / 150) # 'Param pour Position de Wmax le long du limbe
 RATIO_CN_MSTRUCT = 0.416 #: Pourcentage de masse structurale dûe uniquement aux atomes de C et de N (SU)
 ratio_sucrose_mstruct =  58656.667      #: Amount of C sucrose (µmol C) in 1 g of mstruct (of CN), calculation = ( (92.3e-2)/(12) - (7.7*4.15e-2)/(14*1.25) ) *1e6
 ratio_amino_acids_mstruct = 5500.0      #: Amount of N amino acids (µmol N) in 1 g of mstruct (of CN), calculation = (7.7e-2)/(14)* 1e6
