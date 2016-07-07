@@ -64,6 +64,7 @@ def from_dataframes(hgz_inputs_df, element_inputs_df):
     hgz_inputs_columns = hgz_inputs_df.columns.difference(HGZ_TOPOLOGY_COLUMNS)
     element_inputs_columns = element_inputs_df.columns.difference(ELEMENT_TOPOLOGY_COLUMNS)
     sheath_inputs_grouped = element_inputs_df[element_inputs_df.organ == 'sheath'].groupby(ELEMENT_TOPOLOGY_COLUMNS)
+    sheath_inputs_grouped_all_metamers = element_inputs_df[element_inputs_df.organ == 'sheath'].groupby(['plant', 'axis'])
 
     for element_inputs_id, element_inputs_group in element_inputs_df.groupby(ELEMENT_TOPOLOGY_COLUMNS):
         # element
@@ -77,14 +78,30 @@ def from_dataframes(hgz_inputs_df, element_inputs_df):
         hgz_inputs_dict = hgz_inputs_series[hgz_inputs_columns].to_dict()
         all_hgz_dict[hgz_inputs_id] = hgz_inputs_dict
 
-        # previous sheath
+        # Length of the previous sheaths
         index_metamer = hgz_inputs_id[-1]
-        previous_sheath_id = tuple(list(hgz_inputs_id[:2]) + [index_metamer - 1] + ['sheath'])
-        if sheath_inputs_grouped.groups.has_key(previous_sheath_id):
-            last_previous_sheath_id = previous_sheath_id # should always pass here because the first metamer of each axis always has a previous sheath
-        hgz_to_prev_sheath_dict[hgz_inputs_id] = last_previous_sheath_id # use the last previous sheath found
+        sheath_inputs_group_all_metamers = sheath_inputs_grouped_all_metamers.get_group(tuple(hgz_inputs_id[:2]))
+        for mid in reversed(range(1, index_metamer)):
+            previous_sheath_id = tuple(list(hgz_inputs_id[:2]) + [mid, 'sheath'])
+            if sheath_inputs_grouped.groups.has_key(previous_sheath_id):
+                previous_sheath = sheath_inputs_grouped.get_group(previous_sheath_id)
+                if previous_sheath['is_growing'].iloc[0]:
+                    previous_growing_sheath_L = previous_sheath['length'].iloc[0]
+                    previous_mature_sheath_index = (sheath_inputs_group_all_metamers.loc[sheath_inputs_group_all_metamers.is_growing].index - 1)[0]
+                    if previous_mature_sheath_index in sheath_inputs_group_all_metamers.index:
+                        previous_mature_sheath_L = sheath_inputs_group_all_metamers.loc[previous_mature_sheath_index, 'length']
+                    else:
+                        previous_mature_sheath_L = 0
+                else:
+                    previous_growing_sheath_L = 0
+                    previous_mature_sheath_L = previous_sheath['length'].iloc[0]
+                break
+        else:
+            raise Exception('Error: no previous sheath found.')
 
-    return {'hgz': all_hgz_dict, 'elements': all_element_dict, 'previous_sheaths': hgz_to_prev_sheath_dict}
+        hgz_to_prev_sheath_dict[hgz_inputs_id] = (previous_growing_sheath_L, previous_mature_sheath_L)
+
+    return {'hgz': all_hgz_dict, 'elements': all_element_dict, 'previous_sheaths_L': hgz_to_prev_sheath_dict}
 
 def to_dataframes(data_dict):
     """

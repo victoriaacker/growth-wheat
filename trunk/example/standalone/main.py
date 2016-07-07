@@ -46,10 +46,7 @@ ELEMENT_OUTPUTS_FILENAME = 'exposed_element_outputs.csv'
 OUTPUTS_PRECISION = 10
 
 if __name__ == '__main__':
-    start_time = 0
-    stop_time = 1
-    growthwheat_ts = 1
-    number_of_output_steps = 2
+
     # Create population
     simulation_ = simulation.Simulation(delta_t=3600)
     # read inputs from Pandas dataframe

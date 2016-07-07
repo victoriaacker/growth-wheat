@@ -33,8 +33,6 @@ alpha_mass_growth = 1.73e-05 # Paramètre de croissance massique. Utilisé dans la
 beta_mass_growth = 1.74 # Paramètre de croissance massique. Utilisé dans la relation de puissance entre la longueur L et la matiere seche. Issu Williams (1975).
 RATIO_MSTRUCT_DM = 0.8 #: Ratio Mstruc/Mseche
 Y0 = 137 #: Facteur agrandissement feuille en mode automate (SU)
-ligulation = 0.9 #: pourcentage de longueur totale auquel à lieu la ligulation et donc l'arrêt de la croissance du limbe (et de la partie émergée).
-                 #: Par exemple, on peut considérer que la zone émergée (futur limbe) cesse de grandir lorque l'on atteint 90% de la longueur totale de la feuille.
 Ksslw = 10000 #: Affinité SSLW aux fructanes
 Kc = 350 #: affinité du RER au C (µmol/g)
 Kn = 40 #: affinité du RER à N (µmol/g)
