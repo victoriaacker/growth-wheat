@@ -133,7 +133,7 @@ class Simulation(object):
                 delta_hgz_mstruct = model.calculate_delta_mstruct_preE(hgz_inputs['leaf_L'], delta_leaf_L)
 
             else: #: After the emergence of the previous leaf.
-                if hgz_inputs['t_prev_leaf_emerged'] == 0:
+                if hgz_inputs['t_prev_leaf_emerged'] == 0: #TODO: se rappeler que c'est sensible au pas de temps
                     # Stores values once the previous leaf has emerged
                     curr_hgz_outputs['leaf_Lem_prev'] = hgz_inputs['leaf_L']                                                                       # Leaf length at the time of the emergence of the previous leaf
                     curr_hgz_outputs['leaf_Lmax'] = model.calculate_leaf_Lmax(curr_hgz_outputs['leaf_Lem_prev'])                                   # Final leaf length
@@ -154,13 +154,13 @@ class Simulation(object):
                     ## delta hgz mstruct (=delta leaf mstruct at this stage)
                     delta_hgz_mstruct = model.calculate_delta_mstruct_preE(hgz_inputs['leaf_L'], delta_leaf_L)
 
-                    #: Test of leaf emergence against hidden growing zone length. Assumes that a leaf cannot emerge before the previous one
+                    #: Test of leaf emergence against hidden growing zone length. Assumes that a leaf cannot emerge before the previous one # TODO: besoin correction pour savoir à quel pas de temps exact??
                     curr_hgz_outputs['leaf_is_emerged'] = model.calculate_leaf_emergence(hgz_inputs['leaf_L'], curr_hgz_outputs['hgz_L']) #TODO: valeurs actuelles ou precedentes?
                     if curr_hgz_outputs['leaf_is_emerged']: # Initialise lamina outputs
                         all_elements_outputs[lamina_id] = dict.fromkeys(ELEMENT_OUTPUTS, 0)
                         all_elements_outputs[lamina_id]['is_growing'] = True
 
-                #: Lamina has emerged and is growing
+                #: Lamina has emerged and is growing, TODO: chager les variables 'emerge'
                 elif curr_hgz_outputs['leaf_is_emerged'] and all_elements_inputs[lamina_id]['is_growing']:
                     curr_element_outputs = all_elements_outputs[lamina_id]
                     ## Length of emerged lamina
@@ -208,7 +208,8 @@ class Simulation(object):
                     curr_element_outputs = all_elements_outputs[sheath_id]
 
                     ## Length of emerged sheath
-                    curr_element_outputs['length'] = model.calculate_sheath_L(curr_hgz_outputs['leaf_L'], curr_hgz_outputs['hgz_L']) # Assumes that this calculation is done once the lamina has reached its final length
+                    lamina_L = self.outputs['elements'][hgz_id + tuple(['lamina'])]['length']
+                    curr_element_outputs['length'] = model.calculate_sheath_L(curr_hgz_outputs['leaf_L'], curr_hgz_outputs['hgz_L'], lamina_L)
 
                     ## Sheath width
                     curr_element_outputs['width'] = curr_hgz_outputs['leaf_Wlig']

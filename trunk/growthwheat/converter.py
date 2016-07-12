@@ -80,26 +80,30 @@ def from_dataframes(hgz_inputs_df, element_inputs_df):
 
         # Length of the previous sheaths
         index_metamer = hgz_inputs_id[-1]
-        sheath_inputs_group_all_metamers = sheath_inputs_grouped_all_metamers.get_group(tuple(hgz_inputs_id[:2]))
+        sheath_inputs_group_all_metamers = sheath_inputs_grouped_all_metamers.get_group(tuple(hgz_inputs_id[:2])) #: all sheaths of the hgz
         for mid in reversed(range(1, index_metamer)):
             previous_sheath_id = tuple(list(hgz_inputs_id[:2]) + [mid, 'sheath'])
             if sheath_inputs_grouped.groups.has_key(previous_sheath_id):
                 previous_sheath = sheath_inputs_grouped.get_group(previous_sheath_id)
-                if previous_sheath['is_growing'].iloc[0]:
-                    previous_growing_sheath_L = previous_sheath['length'].iloc[0]
-                    previous_mature_sheath_index = (sheath_inputs_group_all_metamers.loc[sheath_inputs_group_all_metamers.is_growing].index - 1)[0]
+                if previous_sheath['is_growing'].iloc[0]: #: the previous sheath is growing
+                    previous_growing_sheaths = sheath_inputs_group_all_metamers.loc[sheath_inputs_group_all_metamers.is_growing] #: all previous growing sheaths
+                    if len(previous_growing_sheaths) > 1:
+                        raise Warning('Several previous growing sheaths found.') #: In wheat there is usually a single growing sheath emerged
+                    previous_growing_sheaths_L = previous_growing_sheaths.length.sum() #: Sum of the previous growing sheath lengths (although only 1 previous growing sheath is expected, see Warning above)
+                    previous_mature_sheath_index = previous_growing_sheaths.index[0] - 1 #: Found the first previous mature sheath
                     if previous_mature_sheath_index in sheath_inputs_group_all_metamers.index:
                         previous_mature_sheath_L = sheath_inputs_group_all_metamers.loc[previous_mature_sheath_index, 'length']
                     else:
                         previous_mature_sheath_L = 0
+                        raise Warning('No previous mature sheath found.')
                 else:
-                    previous_growing_sheath_L = 0
+                    previous_growing_sheaths_L = 0
                     previous_mature_sheath_L = previous_sheath['length'].iloc[0]
                 break
         else:
             raise Exception('Error: no previous sheath found.')
 
-        hgz_to_prev_sheath_dict[hgz_inputs_id] = (previous_growing_sheath_L, previous_mature_sheath_L)
+        hgz_to_prev_sheath_dict[hgz_inputs_id] = (previous_growing_sheaths_L, previous_mature_sheath_L) #TODO: distinguer emerge de total dans noms variables
 
     return {'hgz': all_hgz_dict, 'elements': all_element_dict, 'previous_sheaths_L': hgz_to_prev_sheath_dict}
 

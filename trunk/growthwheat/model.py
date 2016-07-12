@@ -303,7 +303,6 @@ def calculate_s_mstruct_amino_acids(delta_hgz_mstruct, delta_lamina_mstruct, del
     """
     return (delta_hgz_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.ratio_amino_acids_mstruct
 
-
 def Respiration(delta_mstruct):
     '''Flow from sucrose to C_respi_croi
     '''
@@ -395,7 +394,7 @@ def calculate_delta_lamina_area(delta_leaf_L, lamina_W, delta_lamina_W):
     :Returns Type:
         :class:`float`
     """
-    return delta_leaf_L * (lamina_W + delta_lamina_W)
+    return (delta_leaf_L * (lamina_W + delta_lamina_W)) / 2 #: Assumes a trapezoid form for the delta area
 
 
 def calculate_export_sucrose(delta_mstruct, sucrose, hgz_mstruct):
@@ -428,18 +427,19 @@ def calculate_export_amino_acids(delta_mstruct, amino_acids, hgz_mstruct):
     """
     return delta_mstruct * max(0, (amino_acids / hgz_mstruct))
 
-def calculate_sheath_L(leaf_L, hgz_L):
-    """ Emerged sheath length given by the difference between leaf length and hidden growing zone length. Assumes that the lamina has reached its final length.
+def calculate_sheath_L(leaf_L, hgz_L, lamina_L):
+    """ Emerged sheath length. Assumes that leaf_L = hgz_L + sheath_L + lamina_L
 
     :Parameters:
         - `leaf_L` (:class:`float`) - Total leaf length (mm)
         - `hgz_L` (:class:`float`) - Length of the hidden growing zone (mm)
+        - `lamina_L` (:class:`float`) - Lamina length (mm)
     :Returns:
         sheath length (mm)
     :Returns Type:
         :class:`float`
     """
-    return leaf_L - hgz_L
+    return leaf_L - hgz_L - lamina_L
 
 def calculate_sheath_area(sheath_L, leaf_Wlig):
     """ Emerged sheath area.
