@@ -34,20 +34,20 @@ import simulation
 
 #: the columns which define the topology in the input/output dataframe
 HGZ_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer']
-ELEMENT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ'] # exposed elements
+ORGAN_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ'] # exposed organs
 
 #: the name of the organs representing a leaf
 LEAF_ORGANS_NAMES = set(['sheath', 'blade'])
 
 
-def from_dataframes(hgz_inputs, element_inputs):
+def from_dataframes(hgz_inputs, organ_inputs):
     """
     Convert inputs/outputs from Pandas dataframe to Growth-Wheat format.
 
     :Parameters:
 
         - `hgz_inputs` (:class:`pandas.DataFrame`) - Hidden growing zone inputs dataframe to convert, with one line by Hidden growing zone.
-        - `element_inputs` (:class:`pandas.DataFrame`) - Exposed element inputs dataframe to convert, with one line by element.
+        - `organ_inputs` (:class:`pandas.DataFrame`) - Exposed organ inputs dataframe to convert, with one line by organ.
 
     :Returns:
         The inputs in a dictionary.
@@ -59,18 +59,18 @@ def from_dataframes(hgz_inputs, element_inputs):
 
     """
     all_hgz_dict = {}
-    all_element_dict = {}
+    all_organ_dict = {}
     hgz_to_prev_sheath_dict = {}
     hgz_inputs_columns = hgz_inputs.columns.difference(HGZ_TOPOLOGY_COLUMNS)
-    element_inputs_columns = element_inputs.columns.difference(ELEMENT_TOPOLOGY_COLUMNS)
-    sheath_inputs_grouped = element_inputs[element_inputs.organ == 'sheath'].groupby(ELEMENT_TOPOLOGY_COLUMNS)
-    sheath_inputs_grouped_all_metamers = element_inputs[element_inputs.organ == 'sheath'].groupby(['plant', 'axis'])
+    organ_inputs_columns = organ_inputs.columns.difference(ORGAN_TOPOLOGY_COLUMNS)
+    sheath_inputs_grouped = organ_inputs[organ_inputs.organ == 'sheath'].groupby(ORGAN_TOPOLOGY_COLUMNS)
+    sheath_inputs_grouped_all_metamers = organ_inputs[organ_inputs.organ == 'sheath'].groupby(['plant', 'axis'])
 
-    for element_inputs_id, element_inputs_group in element_inputs.groupby(ELEMENT_TOPOLOGY_COLUMNS):
-        # element
-        element_inputs_series = element_inputs_group.loc[element_inputs_group.first_valid_index()]
-        element_inputs_dict = element_inputs_series[element_inputs_columns].to_dict()
-        all_element_dict[element_inputs_id] = element_inputs_dict
+    for organ_inputs_id, organ_inputs_group in organ_inputs.groupby(ORGAN_TOPOLOGY_COLUMNS):
+        # organ
+        organ_inputs_series = organ_inputs_group.loc[organ_inputs_group.first_valid_index()]
+        organ_inputs_dict = organ_inputs_series[organ_inputs_columns].to_dict()
+        all_organ_dict[organ_inputs_id] = organ_inputs_dict
 
     for hgz_inputs_id, hgz_inputs_group in hgz_inputs.groupby(HGZ_TOPOLOGY_COLUMNS):
         # hgz
@@ -90,7 +90,7 @@ def from_dataframes(hgz_inputs, element_inputs):
                     previous_growing_sheaths = sheath_inputs_group_all_metamers.loc[(sheath_inputs_group_all_metamers.metamer <= mid) & sheath_inputs_group_all_metamers.is_growing] #: all previous growing sheaths
                     if len(previous_growing_sheaths) > 1:
                         raise Warning('Several previous growing sheaths found.') #: In wheat there is usually a single growing sheath emerged
-                    previous_growing_sheaths_L = previous_growing_sheaths.length.sum() #: Sum of the previous growing sheath lengths (although only 1 previous growing sheath is expected, see Warning above)
+                    previous_growing_sheaths_L = previous_growing_sheaths.length.sum() #: Sum of the previous emerged growing sheath lengths (although only 1 previous growing sheath is expected, see Warning above)
                     previous_mature_sheath_index = previous_growing_sheaths.first_valid_index() - 1 #: Found the first previous mature sheath
                     if previous_mature_sheath_index in sheath_inputs_group_all_metamers.index:
                         previous_mature_sheath_L = sheath_inputs_group_all_metamers.loc[previous_mature_sheath_index, 'length']
@@ -101,12 +101,15 @@ def from_dataframes(hgz_inputs, element_inputs):
                     previous_growing_sheaths_L = 0
                     previous_mature_sheath_L = previous_sheath.loc[previous_sheath.first_valid_index(), 'length']
                 break
-        else:
+        try:
+            previous_growing_sheaths_L
+            previous_mature_sheath_L
+        except:
             raise Exception('Error: no previous sheath found.')
 
         hgz_to_prev_sheath_dict[hgz_inputs_id] = (previous_growing_sheaths_L, previous_mature_sheath_L) #TODO: distinguer emerge de total dans noms variables
 
-    return {'hgz': all_hgz_dict, 'elements': all_element_dict, 'previous_sheaths_L': hgz_to_prev_sheath_dict}
+    return {'hgz': all_hgz_dict, 'organs': all_organ_dict, 'previous_sheaths_L': hgz_to_prev_sheath_dict}
 
 
 def to_dataframes(data_dict):
@@ -118,7 +121,7 @@ def to_dataframes(data_dict):
         - `data_dict` (:class:`dict`) - The outputs in Growth-Wheat format.
 
     :Returns:
-        One dataframe for hgz outputs and one dataframe for element outputs.
+        One dataframe for hgz outputs and one dataframe for organ outputs.
 
     :Returns Type:
         :class:`tuple` of :class:`pandas.DataFrame`
@@ -128,7 +131,7 @@ def to_dataframes(data_dict):
     """
     dataframes_dict = {}
     for (current_key, current_topology_columns, current_outputs_names) in (('hgz', HGZ_TOPOLOGY_COLUMNS, simulation.HGZ_OUTPUTS),
-                                                                           ('elements', ELEMENT_TOPOLOGY_COLUMNS, simulation.ELEMENT_OUTPUTS)):
+                                                                           ('organs', ORGAN_TOPOLOGY_COLUMNS, simulation.ORGAN_OUTPUTS)):
         current_data_dict = data_dict[current_key]
         current_ids_df = pd.DataFrame(current_data_dict.keys(), columns=current_topology_columns)
         current_data_df = pd.DataFrame(current_data_dict.values())
@@ -138,22 +141,22 @@ def to_dataframes(data_dict):
         current_df = current_df.reindex_axis(current_columns_sorted, axis=1, copy=False)
         current_df.reset_index(drop=True, inplace=True)
         dataframes_dict[current_key] = current_df
-    return dataframes_dict['hgz'], dataframes_dict['elements']
+    return dataframes_dict['hgz'], dataframes_dict['organs']
 
 
-def from_MTG(g, hgz_inputs=None, element_inputs=None):
+def from_MTG(g, hgz_inputs=None, organ_inputs=None):
     """
     Convert a MTG to Growth-Wheat inputs.
-    Use data in `hgz_inputs` and `element_inputs` if `g` is incomplete.
-    
+    Use data in `hgz_inputs` and `organ_inputs` if `g` is incomplete.
+
     :Parameters:
 
         - g (:class:`openalea.mtg.mtg.MTG`) - A MTG which contains the inputs
-          of Growth-Wheat. These inputs are: :mod:`simulation.HGZ_INPUTS` and :mod:`simulation.ELEMENT_INPUTS`.
+          of Growth-Wheat. These inputs are: :mod:`simulation.HGZ_INPUTS` and :mod:`simulation.ORGAN_INPUTS`.
 
         - `hgz_inputs` (:class:`pandas.DataFrame`) - hidden growing zones dataframe, with one line by hidden growing zone.
 
-        - `element_inputs` (:class:`pandas.DataFrame`) - elements dataframe, with one line by element.
+        - `organ_inputs` (:class:`pandas.DataFrame`) - organs dataframe, with one line by organ.
 
     :Returns:
         The inputs of Growth-Wheat.
@@ -165,18 +168,18 @@ def from_MTG(g, hgz_inputs=None, element_inputs=None):
 
     """
     all_hgz_dict = {}
-    all_element_dict = {}
+    all_organ_dict = {}
     hgz_to_prev_sheath_dict = {}
-    
+
     if hgz_inputs is None:
         hgz_inputs = pd.DataFrame(columns=HGZ_TOPOLOGY_COLUMNS)
-    if element_inputs is None:
-        element_inputs = pd.DataFrame(columns=ELEMENT_TOPOLOGY_COLUMNS)
-        
+    if organ_inputs is None:
+        organ_inputs = pd.DataFrame(columns=ORGAN_TOPOLOGY_COLUMNS)
+
     hgz_inputs_grouped = hgz_inputs.groupby(HGZ_TOPOLOGY_COLUMNS)
-    element_inputs_grouped = element_inputs.groupby(ELEMENT_TOPOLOGY_COLUMNS)
-    sheath_inputs_grouped = element_inputs[element_inputs.organ == 'sheath'].groupby(ELEMENT_TOPOLOGY_COLUMNS)
-    sheath_inputs_grouped_all_metamers = element_inputs[element_inputs.organ == 'sheath'].groupby(['plant', 'axis'])
+    organ_inputs_grouped = organ_inputs.groupby(ORGAN_TOPOLOGY_COLUMNS)
+    sheath_inputs_grouped = organ_inputs[organ_inputs.organ == 'sheath'].groupby(ORGAN_TOPOLOGY_COLUMNS)
+    sheath_inputs_grouped_all_metamers = organ_inputs[organ_inputs.organ == 'sheath'].groupby(['plant', 'axis'])
 
     for plant_vid in g.components_iter(g.root):
         plant_index = int(g.index(plant_vid))
@@ -189,58 +192,58 @@ def from_MTG(g, hgz_inputs=None, element_inputs=None):
                 for organ_vid in g.components_iter(metamer_vid):
                     organ_label = g.label(organ_vid)
                     if organ_label not in LEAF_ORGANS_NAMES: continue
-                    
+
                     organ_inputs_from_mtg = g.get_vertex_property(organ_vid)
-                    
+
                     if organ_label == 'sheath':
                         growthwheat_hgz_data_from_mtg_organs_data['leaf_Wlig'] = organ_inputs_from_mtg['diameter']
                     elif organ_label == 'blade':
                         growthwheat_hgz_data_from_mtg_organs_data['lamina_Lmax'] = organ_inputs_from_mtg['shape_mature_length']
                         growthwheat_hgz_data_from_mtg_organs_data['leaf_Wmax'] = organ_inputs_from_mtg['shape_max_width']
-                        
-                    for element_vid in g.components_iter(organ_vid):
-                        element_label = g.label(element_vid)
-                        if element_label == 'HiddenElement': continue
-                        element_id = (plant_index, axis_label, metamer_index, organ_label)
-                        if element_id in element_inputs_grouped.groups:
-                            element_inputs_group = element_inputs_grouped.get_group(element_id)
-                            element_inputs_group_series = element_inputs_group.loc[element_inputs_group.first_valid_index(), simulation.ELEMENT_INPUTS]
+
+                    for organ_vid in g.components_iter(organ_vid):
+                        organ_label = g.label(organ_vid)
+                        if organ_label == 'Hiddenorgan': continue
+                        organ_id = (plant_index, axis_label, metamer_index, organ_label)
+                        if organ_id in organ_inputs_grouped.groups:
+                            organ_inputs_group = organ_inputs_grouped.get_group(organ_id)
+                            organ_inputs_group_series = organ_inputs_group.loc[organ_inputs_group.first_valid_index(), simulation.ORGAN_INPUTS]
                         else:
-                            element_inputs_group_series = pd.Series()
-                        element_inputs_from_mtg = g.get_vertex_property(element_vid)
-                        element_inputs_dict = {}
-                        is_valid_element = True
-                        for element_input_name in simulation.ELEMENT_INPUTS:
-                            
-                            if element_input_name in element_inputs_from_mtg:
+                            organ_inputs_group_series = pd.Series()
+                        organ_inputs_from_mtg = g.get_vertex_property(organ_vid)
+                        organ_inputs_dict = {}
+                        is_valid_organ = True
+                        for organ_input_name in simulation.ORGAN_INPUTS:
+
+                            if organ_input_name in organ_inputs_from_mtg:
                                 # use the input from the MTG
-                                element_inputs_dict[element_input_name] = element_inputs_from_mtg[element_input_name]
+                                organ_inputs_dict[organ_input_name] = organ_inputs_from_mtg[organ_input_name]
                             else:
                                 # use the input from the dataframe
-                                if element_input_name in element_inputs_group_series:
-                                    element_inputs_dict[element_input_name] = element_inputs_group_series[element_input_name]
+                                if organ_input_name in organ_inputs_group_series:
+                                    organ_inputs_dict[organ_input_name] = organ_inputs_group_series[organ_input_name]
                                 else:
-                                    is_valid_element = False
+                                    is_valid_organ = False
                                     break
-                        if is_valid_element:
-                            all_element_dict[element_id] = element_inputs_dict
-                
-                
+                        if is_valid_organ:
+                            all_organ_dict[organ_id] = organ_inputs_dict
+
+
                 # hgz inputs and length of previous sheaths
                 previous_metamer_vid = g.parent(metamer_vid)
-                
+
                 hgz_id = (plant_index, axis_label, metamer_index)
                 if hgz_id in hgz_inputs_grouped.groups:
                     hgz_inputs_group = hgz_inputs_grouped.get_group(hgz_id)
                     hgz_inputs_group_series = hgz_inputs_group.loc[hgz_inputs_group.first_valid_index(), simulation.HGZ_INPUTS]
                 else:
                     hgz_inputs_group_series = pd.Series()
-                
+
                 metamer_properties = g.get_vertex_property(metamer_vid)
                 if 'hgz' in metamer_properties:
                     hgz_inputs_from_mtg = metamer_properties['hgz']
                     hgz_inputs_dict = {}
-                    
+
                     is_valid_hgz = True
                     for hgz_input_name in simulation.HGZ_INPUTS:
                         if hgz_input_name in hgz_inputs_from_mtg:
@@ -257,7 +260,7 @@ def from_MTG(g, hgz_inputs=None, element_inputs=None):
                                 break
                     if is_valid_hgz:
                         all_hgz_dict[hgz_id] = hgz_inputs_dict
-                        
+
                     # Length of the previous sheaths
                     if previous_metamer_vid is not None:
                         for previous_metamer_organ_vid in g.components_iter(previous_metamer_vid):
@@ -266,7 +269,7 @@ def from_MTG(g, hgz_inputs=None, element_inputs=None):
                                 break
                         else:
                             raise Exception('Error: no previous sheath found.')
-                            
+
                         previous_sheath_properties = g.get_vertex_property(previous_sheath_vid)
                         if previous_sheath_properties['is_growing']:
                             previous_growing_sheath_ancestors_vid = []
@@ -285,7 +288,7 @@ def from_MTG(g, hgz_inputs=None, element_inputs=None):
                             previous_growing_sheaths_L = 0.0
                             for previous_growing_sheath_ancestor_vid in previous_growing_sheath_ancestors_vid:
                                 previous_growing_sheaths_L += g.get_vertex_property(previous_growing_sheath_ancestor_vid)['length']
-                                
+
                             previous_mature_sheath_vid = g.parent(previous_growing_sheath_ancestors_vid[-1])
                             if previous_mature_sheath_vid is not None:
                                 previous_mature_sheath_L = g.get_vertex_property(previous_mature_sheath_vid)['length']
@@ -295,16 +298,16 @@ def from_MTG(g, hgz_inputs=None, element_inputs=None):
                         else:
                             previous_growing_sheaths_L = 0
                             previous_mature_sheath_L = previous_sheath_properties['length']
-                            
-                        hgz_to_prev_sheath_dict[(plant_index, axis_label, metamer_index)] = (previous_growing_sheaths_L, previous_mature_sheath_L) #TODO: distinguer emerge de total dans noms variables   
-                        
+
+                        hgz_to_prev_sheath_dict[(plant_index, axis_label, metamer_index)] = (previous_growing_sheaths_L, previous_mature_sheath_L) #TODO: distinguer emerge de total dans noms variables
+
                 else: # use the dataframe
-                    
+
                     # hgz inputs
                     hgz_inputs_group_dict = hgz_inputs_group_series.to_dict()
                     if set(hgz_inputs_group_dict).issuperset(simulation.HGZ_INPUTS):
                         all_hgz_dict[hgz_id] = hgz_inputs_group_dict
-                
+
                     # Length of the previous sheaths
                     if previous_metamer_vid is not None:
                         if axis_id in sheath_inputs_grouped_all_metamers.groups:
@@ -330,10 +333,10 @@ def from_MTG(g, hgz_inputs=None, element_inputs=None):
                                     break
                             else:
                                 raise Exception('Error: no previous sheath found.')
-                    
+
                             hgz_to_prev_sheath_dict[(plant_index, axis_label, metamer_index)] = (previous_growing_sheaths_L, previous_mature_sheath_L) #TODO: distinguer emerge de total dans noms variables
-                
-    return {'hgz': all_hgz_dict, 'elements': all_element_dict, 'previous_sheaths_L': hgz_to_prev_sheath_dict}
+
+    return {'hgz': all_hgz_dict, 'organs': all_organ_dict, 'previous_sheaths_L': hgz_to_prev_sheath_dict}
 
 def update_MTG(inputs, outputs, g, geometrical_model):
     """
@@ -341,19 +344,19 @@ def update_MTG(inputs, outputs, g, geometrical_model):
 
     :Parameters:
             - inputs (:class:`dict` of :class:`dict`) - Growth-Wheat inputs.
-            These inputs are: :mod:`simulation.HGZ_INPUTS` and :mod:`simulation.ELEMENT_INPUTS`.
-    
+            These inputs are: :mod:`simulation.HGZ_INPUTS` and :mod:`simulation.ORGAN_INPUTS`.
+
             - outputs (:class:`dict` of :class:`dict`) - Growth-Wheat outputs.
-            These outputs are: :mod:`simulation.HGZ_OUTPUTS` and :mod:`simulation.ELEMENT_OUTPUTS`.
+            These outputs are: :mod:`simulation.HGZ_OUTPUTS` and :mod:`simulation.ORGAN_OUTPUTS`.
 
             - `g` (:class:`openalea.mtg.mtg.MTG`) - The MTG to update from the inputs and outputs of Growth-Wheat.
-            
-            - `geometrical_model` (:func:`geometrical_model`) - The model which deals with geometry. 
-              This model must implement a method `add_metamer(mtg, plant_index, axis_label)` to add 
-              a metamer to a specific axis of a plant in a MTG. 
-        
-    .. seealso:: 
-        
+
+            - `geometrical_model` (:func:`geometrical_model`) - The model which deals with geometry.
+              This model must implement a method `add_metamer(mtg, plant_index, axis_label)` to add
+              a metamer to a specific axis of a plant in a MTG.
+
+    .. seealso::
+
         * see :attr:`simulation.Simulation.inputs` for the structure of Growth-Wheat inputs.
         * see :attr:`simulation.Simulation.outputs` for the structure of Growth-Wheat outputs.
 
@@ -361,17 +364,17 @@ def update_MTG(inputs, outputs, g, geometrical_model):
 
     # add the properties if needed
     property_names = g.property_names()
-    for growthwheat_data_name in set(simulation.HGZ_INPUTS_OUTPUTS + simulation.ELEMENT_INPUTS_OUTPUTS):
+    for growthwheat_data_name in set(simulation.HGZ_INPUTS_OUTPUTS + simulation.ORGAN_INPUTS_OUTPUTS):
         if growthwheat_data_name not in property_names:
             g.add_property(growthwheat_data_name)
     if 'hgz' not in property_names:
         g.add_property('hgz')
-    
+
     hgzs_inputs_dict = inputs['hgz']
-    elements_inputs_dict = inputs['elements']
+    organs_inputs_dict = inputs['organs']
     hgzs_outputs_dict = outputs['hgz']
-    elements_outputs_dict = outputs['elements']
-    
+    organs_outputs_dict = outputs['organs']
+
     # add new metamer(s)
     axis_to_metamers_mapping = {}
     for metamer_id in sorted(hgzs_outputs_dict.iterkeys()):
@@ -379,7 +382,7 @@ def update_MTG(inputs, outputs, g, geometrical_model):
         if axis_id not in axis_to_metamers_mapping:
             axis_to_metamers_mapping[axis_id] = []
         axis_to_metamers_mapping[axis_id].append(metamer_id)
-        
+
     axis_to_old_metamers_mapping = {}
     for plant_vid in g.components_iter(g.root):
         plant_index = int(g.index(plant_vid))
@@ -398,7 +401,7 @@ def update_MTG(inputs, outputs, g, geometrical_model):
             axis_label = g.label(axis_vid)
             for metamer_vid in g.components_iter(axis_vid):
                 metamer_index = int(g.index(metamer_vid))
-                
+
                 hgz_id = (plant_index, axis_label, metamer_index)
                 mtg_organs_data_from_growthwheat_hgz_data = {}
                 if hgz_id in hgzs_outputs_dict:
@@ -406,40 +409,39 @@ def update_MTG(inputs, outputs, g, geometrical_model):
                     metamer_properties = g.get_vertex_property(metamer_vid)
                     if 'hgz' not in metamer_properties:
                         g.property('hgz')[metamer_vid] = {}
-                    
+
                     for hgz_data in (hgzs_inputs_dict[hgz_id], hgzs_outputs_dict[hgz_id]):
                         for hgz_data_name, hgz_data_value in hgz_data.iteritems():
                             if hgz_data_name not in ('leaf_Wlig', 'lamina_Lmax', 'leaf_Wmax'):
                                 g.property('hgz')[metamer_vid][hgz_data_name] = hgz_data_value
                             else:
                                 mtg_organs_data_from_growthwheat_hgz_data[hgz_data_name] = hgz_data_value
-                        
-                elif 'hgz' in g.get_vertex_property(metamer_vid): 
+
+                elif 'hgz' in g.get_vertex_property(metamer_vid):
                     # remove the 'hgz' property from this metamer
                     del g.property('hgz')[metamer_vid]
-                
+
                 for organ_vid in g.components_iter(metamer_vid):
                     organ_label = g.label(organ_vid)
                     if organ_label not in LEAF_ORGANS_NAMES: continue
-                    
+
                     if len(mtg_organs_data_from_growthwheat_hgz_data) != 0:
                         if organ_label == 'sheath':
                             g.property('diameter')[organ_vid] = mtg_organs_data_from_growthwheat_hgz_data['leaf_Wlig']
                         elif organ_label == 'blade':
                             g.property('shape_mature_length')[organ_vid] = mtg_organs_data_from_growthwheat_hgz_data['lamina_Lmax']
                             g.property('shape_max_width')[organ_vid] = mtg_organs_data_from_growthwheat_hgz_data['leaf_Wmax']
-                            
-                    exposed_element_id = (plant_index, axis_label, metamer_index, organ_label)
-                    element_inputs_dict = elements_inputs_dict.get(exposed_element_id, {})
-                    element_outputs_dict = elements_outputs_dict.get(exposed_element_id, {})
-                    
-                    for element_vid in g.components_iter(organ_vid):
-                        element_label = g.label(element_vid)
-                        if element_label == 'HiddenElement': continue
-                        
-                        for element_input_name in simulation.ELEMENT_INPUTS:
-                            g.property(element_input_name)[element_vid] = element_inputs_dict.get(element_input_name)
-                        for element_output_name in simulation.ELEMENT_OUTPUTS:
-                            g.property(element_output_name)[element_vid] = element_outputs_dict.get(element_output_name)
-                
-                            
+
+                    exposed_organ_id = (plant_index, axis_label, metamer_index, organ_label)
+                    organ_inputs_dict = organs_inputs_dict.get(exposed_organ_id, {})
+                    organ_outputs_dict = organs_outputs_dict.get(exposed_organ_id, {})
+
+                    for organ_vid in g.components_iter(organ_vid):
+                        organ_label = g.label(organ_vid)
+                        if organ_label == 'Hiddenorgan': continue
+
+                        for organ_input_name in simulation.ORGAN_INPUTS:
+                            g.property(organ_input_name)[organ_vid] = organ_inputs_dict.get(organ_input_name)
+                        for organ_output_name in simulation.ORGAN_OUTPUTS:
+                            g.property(organ_output_name)[organ_vid] = organ_outputs_dict.get(organ_output_name)
+

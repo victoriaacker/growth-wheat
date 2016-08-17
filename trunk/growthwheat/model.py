@@ -52,34 +52,32 @@ def calculate_deltaL_preE(sucrose, leaf_L, amino_acids, mstruct, delta_t):
     :Returns Type:
         :class:`float`
     """
-    if sucrose == 0:
-        delta_leaf_L =  0
-    else:
+    if sucrose > 0:
         delta_leaf_L = leaf_L * ((sucrose / mstruct) / (parameters.Kc + (sucrose / mstruct))) * (((amino_acids/mstruct) **3) / (parameters.Kn**3 + (amino_acids / mstruct)**3)) * parameters.RERmax * delta_t
+    else:
+        delta_leaf_L = 0
     return delta_leaf_L
 
-def calculate_deltaL_postE(sucrose, t, leaf_Lmax, leaf_Lem_prev):
-    """ delta of leaf length, from the emergence of the previous leaf to the end of growth (predefined beta growth kinetic).
+def calculate_deltaL_postE(leaf_L, leaf_Lmax, sucrose, delta_t):
+    """ delta of leaf length, from the emergence of the previous leaf to the end of growth (predefined growth kinetic depending on leaf state).
 
     :Parameters:
-        - `sucrose` (:class:`float`) - Amount of sucrose (µmol C)
-        - `t` (:class:`float`) - time elapsed from the emergence of the previous leaf (s)
+        - `leaf_L` (:class:`float`) - Total leaf length (mm)
         - `leaf_Lmax` (:class:`float`) - Final leaf length (mm)
-        - `leaf_Lem_prev` (:class:`float`) - Leaf length at the emergence of the previous leaf (mm)
+        - `sucrose` (:class:`float`) - Amount of sucrose (µmol C)
     :Returns:
         delta delta_leaf_L (mm)
     :Returns Type:
         :class:`float`
     """
-    if sucrose == 0:
-        delta_leaf_L = 0
+    if sucrose > 0:
+        delta_leaf_L = parameters.K * leaf_L * ((leaf_L - leaf_Lmax)**2)**parameters.N * delta_t
     else:
-        delta_leaf_L = (leaf_Lmax - leaf_Lem_prev) * ((-1 / (parameters.xend - parameters.xmax)) * ((t - parameters.xb) / (parameters.xend - parameters.xb))**((parameters.xend - parameters.xb) / (parameters.xend-parameters.xmax)) + \
-            (1 + (parameters.xend - t) / (parameters.xend - parameters.xmax)) * (1 / (parameters.xend - parameters.xmax)) * ((t - parameters.xb) / (parameters.xend - parameters.xb))**((parameters.xend - parameters.xb) / (parameters.xend - parameters.xmax) - 1))
+        delta_leaf_L = 0
     return delta_leaf_L
 
 def calculate_delta_mstruct_preE(leaf_L, delta_leaf_L):
-    """ Relation between leaf length and the delta of mstruct in the hidden growing zone, from initiation to the emergence of the leaf.
+    """ Relation between leaf length and the delta of mstruct in the hidden growing zone.
     Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1975) and expressed in g of dry mass.
     Parameter RATIO_MSTRUCT_DM is then used to convert in g of structural dry mass.
     Finally, parameter RATIO_CN_MSTRUCT is used to convert in g of structural dry mass for C and N only.
@@ -199,8 +197,8 @@ def calculate_leaf_Wlig(leaf_Wmax):
     """
     return parameters.Klig * leaf_Wmax
 
-def calculate_leaf_SSLW(fructan, mstruct):
-    """ Structural Specific Leaf Weight.
+def calculate_SSLW(fructan, mstruct):
+    """ Structural Specific Lamina Weight.
 
     :Parameters:
         - `fructan` (:class:`float`) - Fructan in the hidden growing zone at the time of the previous leaf emergence (µmol C).
@@ -212,6 +210,18 @@ def calculate_leaf_SSLW(fructan, mstruct):
     """
     conc_fructan = fructan / mstruct
     return parameters.min_SSLW + (parameters.max_SSLW - parameters.min_SSLW) * conc_fructan/ (conc_fructan + parameters.Ksslw)
+
+def calculate_SSSW(SSLW):
+    """ Structural Specific Sheath Weight.
+
+    :Parameters:
+        - `SSLW` (:class:`float`) - Structural Specific Leaf Weight (g mm-2).
+    :Returns:
+        Structural Specific Sheath Weight (g mm-2)
+    :Returns Type:
+        :class:`float`
+    """
+    return SSLW * parameters.ratio_SSSW_SSLW
 
 def calculate_leaf_W(leaf_L, leaf_Lwmax, leaf_Wmax, lamina_Lmax, leaf_Wlig, leaf_Lmax):
     """ Leaf width at leaf base (from Dornbush et al., 2011).
@@ -237,43 +247,6 @@ def calculate_leaf_W(leaf_L, leaf_Lwmax, leaf_Wmax, lamina_Lmax, leaf_Wlig, leaf
     else:
         leaf_W = 0.0
     return leaf_W
-
-def calculate_delta_leaf_width(leaf_L, leaf_Lwmax, leaf_Wmax, delta_leaf_L, lamina_Lmax, leaf_Wlig):
-    """ delta leaf width.
-
-    :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (mm)
-        - `leaf_Lwmax` (:class:`float`) - Position of the maximal leaf width (leaf_Wmax) along the lamina (mm)
-        - `leaf_Wmax` (:class:`float`) - Maximal leaf width (mm)
-        - `delta_leaf_L` (:class:`float`) - delta of leaf length (mm)
-        - `lamina_Lmax` (:class:`float`) - Maximal lamina length (mm)
-        - `leaf_Wlig` (:class:`float`) - Lamina width at ligule position (mm)
-    :Returns:
-        delta leaf width (mm)
-    :Returns Type:
-        :class:`float`
-    """
-    if leaf_L >= 0 and leaf_L <= leaf_Lwmax:
-        delta_leaf_W = leaf_Wmax * parameters.c1 * (1 / (leaf_Lwmax**parameters.c1)) * leaf_L**(parameters.c1-1) * delta_leaf_L
-    elif leaf_L >= leaf_Lwmax and leaf_L <= lamina_Lmax:
-        delta_leaf_W =  -parameters.c2 * (1/(lamina_Lmax - leaf_Lwmax) ) * ((leaf_Wmax-leaf_Wlig)/math.log(1+parameters.c2)) * 1/(1 + parameters.c2 *( (lamina_Lmax - leaf_L)/(lamina_Lmax-leaf_Lwmax) ) ) * delta_leaf_L
-    else:
-       delta_leaf_W = 0
-    return delta_leaf_W
-
-def calculate_delta_leaf_area(delta_leaf_L, leaf_W, delta_leaf_W):
-    """ delta leaf area.
-
-    :Parameters:
-        - `delta_leaf_L` (:class:`float`) - delta of leaf length (mm)
-        - `leaf_W` (:class:`float`) - Leaf width (mm)
-        - `delta_leaf_W` (:class:`float`) - Delta leaf width (mm)
-    :Returns:
-        delta leaf area (mm2)
-    :Returns Type:
-        :class:`float`
-    """
-    return delta_leaf_L*(leaf_W + delta_leaf_W)
 
 def calculate_s_mstruct_sucrose(delta_hgz_mstruct, delta_lamina_mstruct, delta_sheath_mstruct):
     """Consumption of sucrose for the calculated growth of mstruct (µmol C consumed by mstruct growth)
@@ -387,14 +360,14 @@ def calculate_delta_lamina_area(delta_leaf_L, lamina_W, delta_lamina_W):
 
     :Parameters:
         - `delta_leaf_L` (:class:`float`) - delta of leaf length (mm)
-        - `lamina_W` (:class:`float`) - lamina width (mm)
+        - `lamina_W` (:class:`float`) - lamina width at the previous time step(mm)
         - `delta_lamina_W` (:class:`float`) - Delta lamina width (mm)
     :Returns:
         delta lamina area (mm2)
     :Returns Type:
         :class:`float`
     """
-    return (delta_leaf_L * (lamina_W + delta_lamina_W)) / 2 #: Assumes a trapezoid form for the delta area
+    return delta_leaf_L * (lamina_W + delta_lamina_W / 2) #: Assumes a trapezoid form for the delta area
 
 
 def calculate_export_sucrose(delta_mstruct, sucrose, hgz_mstruct):
@@ -455,7 +428,7 @@ def calculate_sheath_area(sheath_L, leaf_Wlig):
     return sheath_L * leaf_Wlig * math.pi
 
 def calculate_t_prev_leaf_emerged(t_prev_leaf_emerged, delta_t):
-    """Increment the time spent after the emergence of the previous leaf
+    """Increment the time spent after the emergence of the previous leaf. If sucrose is null, then 't_prev_leaf_emerged' is not incremented
 
     :Parameters:
         - `t_prev_leaf_emerged` (:class:`float`) - Time spent after the emergence of the previous leaf at (t-1) (hour)
