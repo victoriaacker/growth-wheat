@@ -1,5 +1,5 @@
-plant,axis,metamer,organ,length,width,area,is_growing,mstruct,sucrose,amino_acids,fructan
-1,MS,1,sheath,20.0,5.0,NA,False,0.005,30.0,10.0,0
-1,MS,2,sheath,30.0,5.0,NA,False,0.005,30.0,10.0,0
-1,MS,3,sheath,40.0,5.0,NA,False,0.005,30.0,10.0,0
-1,MS,4,blade,6.63625166,2.2691742487,6003990912.93,True,68935.4220659,137870844.132,20680626.6198,0
+plant,axis,metamer,organ,length,is_growing
+1,MS,1,sheath,20.0,False
+1,MS,2,sheath,30.0,False
+1,MS,3,sheath,40.0,False
+1,MS,4,blade,6.63625166,True

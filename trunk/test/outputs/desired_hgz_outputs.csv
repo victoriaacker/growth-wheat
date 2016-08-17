@@ -1,4 +1,4 @@
-plant,axis,metamer,leaf_is_growing,hgz_L,leaf_L,leaf_Lmax,leaf_Lem_prev,lamina_Lmax,sheath_Lmax,leaf_Lwmax,leaf_Wmax,leaf_Wlig,SSLW,SSSW,t_prev_leaf_emerged,leaf_is_emerged,sucrose,amino_acids,fructan,hgz_mstruct
-1,MS,4,True,40.0,135.0,135.0,1.0,118.226,16.774,61.4777,7.89356,4.73614,2.76e-05,0.000138,101.0,True,-5951177324.18,-399825446.482,0.15,0.005
-1,MS,5,True,40.0,137.0,137.0,1.0,98.1938073394,38.8061926606,51.0607798165,6.5622959074,3.93737754444,2.725e-05,0.00013625,1.0,False,-6752.02764488,-440.367328656,0.03,0.0800803324828
-1,MS,6,True,40.0,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,0.0,False,0.000956035772373,0.000197132645723,0.0,6.44213371413e-08
+plant,axis,metamer,leaf_is_growing,hgz_L,leaf_L,leaf_Lmax,leaf_Lem_prev,lamina_Lmax,sheath_Lmax,leaf_Wmax,SSLW,SSSW,t_prev_leaf_emerged,leaf_is_emerged,sucrose,amino_acids,fructan,hgz_mstruct
+1,MS,4,True,40.0,135.0,135.0,1.0,118.226,16.774,7.89356,2.76e-05,0.000138,101.0,True,10.0,1.5,0.15,0.005
+1,MS,5,True,40.0,137.0,137.0,1.0,98.1938073394,38.8061926606,6.5622959074,2.725e-05,0.00013625,1.0,False,0.03,0.003,0.03,1.3e-05
+1,MS,6,True,40.0,NA,NA,NA,NA,NA,NA,NA,NA,0.0,False,0.001,0.0002,0.0,6.39e-08
