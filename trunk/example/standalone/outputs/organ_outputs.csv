@@ -1,5 +1,10 @@
 plant,axis,metamer,organ,length,is_growing
-1,MS,1,sheath,20.0000000000,False
-1,MS,2,sheath,30.0000000000,False
-1,MS,3,sheath,40.0000000000,False
-1,MS,4,blade,6.6362516600,True
+1,MS,1,sheath,20.000000,False
+1,MS,2,sheath,30.000000,False
+1,MS,3,sheath,40.000000,False
+1,MS,4,blade,6.636252,True
+1,MS,4,sheath,0.000000,False
+1,MS,5,blade,0.000000,False
+1,MS,5,sheath,0.000000,False
+1,MS,6,blade,0.000000,False
+1,MS,6,sheath,0.000000,False

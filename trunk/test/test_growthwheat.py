@@ -35,8 +35,8 @@ import pandas as pd
 from growthwheat import model, simulation, converter
 
 INPUTS_DIRPATH = 'inputs'
-HGZ_INPUTS_FILENAME = 'hgz_inputs.csv'
-ORGAN_INPUTS_FILENAME = 'organ_inputs.csv'
+HGZ_INPUTS_FILENAME = 'hgzs_inputs.csv'
+ORGAN_INPUTS_FILENAME = 'organs_inputs.csv'
 
 OUTPUTS_DIRPATH = 'outputs'
 DESIRED_HGZ_OUTPUTS_FILENAME = 'desired_hgz_outputs.csv'

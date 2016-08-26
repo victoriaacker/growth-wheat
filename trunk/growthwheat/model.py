@@ -26,18 +26,18 @@ from __future__ import division # use "//" to do integer division
 import math
 import parameters
 
-def calculate_hgz_length(prev_growing_sheath_L, prev_mature_sheath_L):
+def calculate_hgz_length(previous_hgz_L, previous_sheath_L):
     """ length of the hidden growing zone given by the previous sheaths.
 
     :Parameters:
-        - `prev_growing_sheath_L` (:class:`float`) - Length of the previous growing sheath (mm)
-        - `prev_mature_sheath_L` (:class:`float`) - Length of the previous mature sheath (mm)
+        - `previous_hgz_L` (:class:`float`) - Length of the previous hidden growing zone (mm). Could be 0 is no previous hgz found.
+        - `previous_sheath_L` (:class:`float`) - Length of the previous sheath (mm). Could be either the length of the emerged part of the previous growing sheath or the length of the previous mature sheath.
     :Returns:
         Hidden growing zone length (mm)
     :Returns Type:
         :class:`float`
     """
-    return prev_growing_sheath_L + prev_mature_sheath_L
+    return previous_hgz_L + previous_sheath_L
 
 def calculate_deltaL_preE(sucrose, leaf_L, amino_acids, mstruct, delta_t):
     """ delta of leaf length over delta_t as a function of sucrose and amino acids, from initiation to the emergence of the previous leaf.
@@ -196,7 +196,7 @@ def calculate_lamina_L(leaf_L, hgz_L):
     """
     lamina_L = leaf_L - hgz_L
     if lamina_L <=0:
-        print "Warning: the leaf is shorther than the hgz"
+        raise Warning('the leaf is shorther than the hgz')
     return max(0, lamina_L)
 
 def calculate_sheath_L(leaf_L, hgz_L, lamina_L):
@@ -212,15 +212,3 @@ def calculate_sheath_L(leaf_L, hgz_L, lamina_L):
         :class:`float`
     """
     return leaf_L - hgz_L - lamina_L
-
-def calculate_t_prev_leaf_emerged(t_prev_leaf_emerged, delta_t):
-    """Increment the time spent after the emergence of the previous leaf. If sucrose is null, then 't_prev_leaf_emerged' is not incremented
-
-    :Parameters:
-        - `t_prev_leaf_emerged` (:class:`float`) - Time spent after the emergence of the previous leaf at (t-1) (hour)
-    :Returns:
-         Time spent after the emergence of the previous leaf at (t) (hour)
-    :Returns Type:
-        :class:`float`
-    """
-    return t_prev_leaf_emerged + (delta_t / parameters.hour_to_second_conversion_factor)

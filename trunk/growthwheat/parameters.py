@@ -23,8 +23,6 @@ from __future__ import division # use "//" to do integer division
         $Id$
 """
 
-hour_to_second_conversion_factor = 3600. #: TODO: temporary
-
 EC_wmax = 0.3 #: variation de + ou - 15% de maximal leaf width (SU)
 Y0 = 137 #: Facteur agrandissement feuille en mode automate (SU)
 K = 0.0239 #: Parameter of the growth function after previous leaf emergence
