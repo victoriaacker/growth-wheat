@@ -30,10 +30,10 @@ def calculate_hgz_length(previous_hgz_L, previous_sheath_L):
     """ length of the hidden growing zone given by the previous sheaths.
 
     :Parameters:
-        - `previous_hgz_L` (:class:`float`) - Length of the previous hidden growing zone (mm). Could be 0 is no previous hgz found.
-        - `previous_sheath_L` (:class:`float`) - Length of the previous sheath (mm). Could be either the length of the emerged part of the previous growing sheath or the length of the previous mature sheath.
+        - `previous_hgz_L` (:class:`float`) - Length of the previous hidden growing zone (m). Could be 0 is no previous hgz found.
+        - `previous_sheath_L` (:class:`float`) - Length of the previous sheath (m). Could be either the length of the emerged part of the previous growing sheath or the length of the previous mature sheath.
     :Returns:
-        Hidden growing zone length (mm)
+        Hidden growing zone length (m)
     :Returns Type:
         :class:`float`
     """
@@ -44,11 +44,11 @@ def calculate_deltaL_preE(sucrose, leaf_L, amino_acids, mstruct, delta_t):
 
     :Parameters:
         - `sucrose` (:class:`float`) - Amount of sucrose (µmol C)
-        - `leaf_L` (:class:`float`) - Total leaf length (mm)
+        - `leaf_L` (:class:`float`) - Total leaf length (m)
         - `amino_acids` (:class:`float`) - Amount of amino acids (µmol N)
-        - `mstruct` (:class:`float`) - Structural mass (g of C and N)
+        - `mstruct` (:class:`float`) - Structural mass (g)
     :Returns:
-        delta delta_leaf_L (mm)
+        delta delta_leaf_L (m)
     :Returns Type:
         :class:`float`
     """
@@ -62,11 +62,11 @@ def calculate_deltaL_postE(leaf_L, leaf_Lmax, sucrose, delta_t):
     """ delta of leaf length, from the emergence of the previous leaf to the end of growth (predefined growth kinetic depending on leaf state).
 
     :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (mm)
-        - `leaf_Lmax` (:class:`float`) - Final leaf length (mm)
+        - `leaf_L` (:class:`float`) - Total leaf length (m)
+        - `leaf_Lmax` (:class:`float`) - Final leaf length (m)
         - `sucrose` (:class:`float`) - Amount of sucrose (µmol C)
     :Returns:
-        delta delta_leaf_L (mm)
+        delta delta_leaf_L (m)
     :Returns Type:
         :class:`float`
     """
@@ -81,35 +81,35 @@ def calculate_leaf_Lmax(leaf_Lem_prev):
     """ Final leaf length.
 
     :Parameters:
-        - `leaf_Lem_prev` (:class:`float`) - Leaf length at the emergence of the previous leaf (mm)
+        - `leaf_Lem_prev` (:class:`float`) - Leaf length at the emergence of the previous leaf (m)
     :Returns:
-        Final leaf length (mm)
+        Final leaf length (m)
     :Returns Type:
         :class:`float`
     """
     return leaf_Lem_prev * parameters.Y0
 
-def calculate_SL_ratio(metamer):
+def calculate_SL_ratio(phytomer_rank):
     """ Sheath:Lamina final length ratio according to the rank. Parameters from Dornbush (2011).
 
     :Parameters:
-        - `metamer` (:class:`float`) - metamer rank
+        - `phytomer_rank` (:class:`float`)
     :Returns:
         Sheath:Lamina ratio (dimensionless)
     :Returns Type:
         :class:`float`
     """
-    return -0.0021 * metamer**3 + 0.037 * metamer**2 - 0.1527 * metamer + 0.4962
+    return -0.0021 * phytomer_rank**3 + 0.037 * phytomer_rank**2 - 0.1527 * phytomer_rank + 0.4962
 
 def calculate_lamina_Lmax(leaf_Lmax, sheath_lamina_ratio):
     """ Final lamina length.
 
     :Parameters:
-        - `leaf_Lmax` (:class:`float`) - Final leaf length (mm)
+        - `leaf_Lmax` (:class:`float`) - Final leaf length (m)
         - `sheath_lamina_ratio` (:class:`float`) - Sheath:Lamina ratio (dimensionless)
 
     :Returns:
-        final lamina length (mm)
+        final lamina length (m)
     :Returns Type:
         :class:`float`
     """
@@ -119,11 +119,11 @@ def calculate_sheath_Lmax(leaf_Lmax, lamina_Lmax):
     """ Final sheath length.
 
     :Parameters:
-        - `leaf_Lmax` (:class:`float`) - Final leaf length (mm)
-        - `lamina_Lmax` (:class:`float`) - Final lamina length (mm)
+        - `leaf_Lmax` (:class:`float`) - Final leaf length (m)
+        - `lamina_Lmax` (:class:`float`) - Final lamina length (m)
 
     :Returns:
-        final sheath length (mm)
+        final sheath length (m)
     :Returns Type:
         :class:`float`
     """
@@ -134,11 +134,11 @@ def calculate_leaf_Wmax(lamina_Lmax, fructan, mstruct):
     0.0575 et 0.12 issu graph Dornbush
 
     :Parameters:
-        - `lamina_Lmax` (:class:`float`) - Maximal lamina length (mm)
+        - `lamina_Lmax` (:class:`float`) - Maximal lamina length (m)
         - `fructan` (:class:`float`) - Fructan in the hidden growing zone at the time of the previous leaf emergence (µmol C).
         - `mstruct` (:class:`float`) - Mstruct of the hidden growing zone at the time of the previous leaf emergence (g).
     :Returns:
-        maximal leaf width (mm)
+        maximal leaf width (m)
     :Returns Type:
         :class:`float`
     """
@@ -151,7 +151,7 @@ def calculate_SSLW(fructan, mstruct):
         - `fructan` (:class:`float`) - Fructan in the hidden growing zone at the time of the previous leaf emergence (µmol C).
         - `mstruct` (:class:`float`) - Mstruct of the hidden growing zone at the time of the previous leaf emergence (g).
     :Returns:
-        Structural Specific Leaf Weight (g mm-2)
+        Structural Specific Leaf Weight (g m-2)
     :Returns Type:
         :class:`float`
     """
@@ -162,9 +162,9 @@ def calculate_SSSW(SSLW):
     """ Structural Specific Sheath Weight.
 
     :Parameters:
-        - `SSLW` (:class:`float`) - Structural Specific Leaf Weight (g mm-2).
+        - `SSLW` (:class:`float`) - Structural Specific Leaf Weight (g m-2).
     :Returns:
-        Structural Specific Sheath Weight (g mm-2)
+        Structural Specific Sheath Weight (g m-2)
     :Returns Type:
         :class:`float`
     """
@@ -174,8 +174,8 @@ def calculate_leaf_emergence(leaf_L, hgz_L):
     """Calculate if a given leaf has emerged from the hidden growing zone
 
     :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (mm)
-        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (mm)
+        - `leaf_L` (:class:`float`) - Total leaf length (m)
+        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (m)
     :Returns:
         Specifies if the leaf has emerged (True) or not (False)
     :Returns Type:
@@ -187,10 +187,10 @@ def calculate_lamina_L(leaf_L, hgz_L):
     """ Emerged lamina length given by the difference between leaf length and hidden growing zone length.
 
     :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (mm)
-        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (mm)
+        - `leaf_L` (:class:`float`) - Total leaf length (m)
+        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (m)
     :Returns:
-        lamina length (mm)
+        lamina length (m)
     :Returns Type:
         :class:`float`
     """
@@ -203,11 +203,11 @@ def calculate_sheath_L(leaf_L, hgz_L, lamina_L):
     """ Emerged sheath length. Assumes that leaf_L = hgz_L + sheath_L + lamina_L
 
     :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (mm)
-        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (mm)
-        - `lamina_L` (:class:`float`) - Lamina length (mm)
+        - `leaf_L` (:class:`float`) - Total leaf length (m)
+        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (m)
+        - `lamina_L` (:class:`float`) - Lamina length (m)
     :Returns:
-        sheath length (mm)
+        sheath length (m)
     :Returns Type:
         :class:`float`
     """

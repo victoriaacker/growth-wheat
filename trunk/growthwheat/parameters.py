@@ -25,12 +25,12 @@ from __future__ import division # use "//" to do integer division
 
 EC_wmax = 0.3 #: variation de + ou - 15% de maximal leaf width (SU)
 Y0 = 137 #: Facteur agrandissement feuille en mode automate (SU)
-K = 0.0239 #: Parameter of the growth function after previous leaf emergence
+K = 23.9 #0.0239 #: Parameter of the growth function after previous leaf emergence (?)
 N = 0.4612 #: Parameter of the growth function after previous leaf emergence
-Ksslw = 10000 #: Affinité SSLW aux fructanes
-Kc = 350 #: affinité du RER au C (µmol/g)
-Kn = 40 #: affinité du RER à N (µmol/g)
-min_SSLW = 2.2e-05 #: g/mm²
-max_SSLW = 5e-05 #: g/mm²
+Ksslw = 4160 #10000 #: Affinité SSLW aux fructanes (µmol C g-1)
+Kc = 145.6 #350 #: affinité du RER au C (µmol/g)
+Kn = 16.64 #40 #: affinité du RER à N (µmol/g)
+min_SSLW = 22 #: g m-2
+max_SSLW = 50 #: g m-2
 ratio_SSSW_SSLW = 5 # ratio gaine/limbe des matieres seches structurales spécifiques (calculé depuis les données de J. Bertheloot, 2004)
 RERmax = 4e-06 #: s-1
