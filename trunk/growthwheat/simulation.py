@@ -36,7 +36,7 @@ HGZ_INPUTS = ['leaf_is_growing', 'hgz_L', 'leaf_L', 'leaf_Lmax', 'leaf_Lem_prev'
 ORGAN_INPUTS = ['length', 'is_growing']
 
 #: the outputs computed by GrowthWheat
-HGZ_OUTPUTS = ['leaf_is_growing', 'hgz_L', 'leaf_L', 'leaf_Lmax', 'leaf_Lem_prev', 'lamina_Lmax', 'sheath_Lmax', 'leaf_Wmax', 'SSLW', 'SSSW', 'leaf_is_emerged', 'sucrose', 'amino_acids', 'fructan', 'hgz_mstruct']
+HGZ_OUTPUTS = ['leaf_is_growing', 'hgz_L', 'leaf_L', 'delta_leaf_L', 'leaf_Lmax', 'leaf_Lem_prev', 'lamina_Lmax', 'sheath_Lmax', 'leaf_Wmax', 'SSLW', 'SSSW', 'leaf_is_emerged', 'sucrose', 'amino_acids', 'fructan', 'hgz_mstruct']
 ORGAN_OUTPUTS = ['length', 'is_growing']
 
 #: the inputs and outputs of GrowthWheat.
@@ -194,6 +194,7 @@ class Simulation(object):
 
             # Update of leaf outputs, TODO: attention aux valeurs negatives
             curr_hgz_outputs['leaf_L'] = min(curr_hgz_outputs['leaf_Lmax'], (hgz_inputs['leaf_L'] + delta_leaf_L))
+            curr_hgz_outputs['delta_leaf_L'] = min(delta_leaf_L, (curr_hgz_outputs['leaf_Lmax'] - hgz_inputs['leaf_L']))
 
             if curr_hgz_outputs['leaf_is_growing']:
                 self.outputs['hgz'][hgz_id] = curr_hgz_outputs
