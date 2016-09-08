@@ -26,23 +26,23 @@ from __future__ import division # use "//" to do integer division
 import math
 import parameters
 
-def calculate_hgz_length(previous_hgz_L, previous_sheath_visible_L, previous_sheath_final_hidden_L):
-    """ length of the hidden growing zone given by the previous sheaths.
+def calculate_hz_length(previous_hz_L, previous_sheath_visible_L, previous_sheath_final_hidden_L):
+    """ length of the hidden zone given by the previous sheaths.
 
     :Parameters:
-        - `previous_hgz_L` (:class:`float`) - Length of the previous hidden growing zone (m). Could be 0 is no previous hgz found.
+        - `previous_hz_L` (:class:`float`) - Length of the previous hidden zone (m). Could be None is no previous hz found.
         - `previous_sheath_visible_L` (:class:`float`) - Visible length of the previous sheath (m).
         - `previous_sheath_final_hidden_L` (:class:`float`) - Final hidden length of the previous sheath (m).
     :Returns:
-        Hidden growing zone length (m)
+        Hidden zone length (m)
     :Returns Type:
         :class:`float`
     """
-    if previous_hgz_L:
-        hgz_L = previous_hgz_L + previous_sheath_visible_L
+    if previous_hz_L:
+        hz_L = previous_hz_L + previous_sheath_visible_L
     else:
-        hgz_L = previous_sheath_final_hidden_L + previous_sheath_visible_L # here 'previous_sheath_visible_L' is also the final visible length of the previous sheath
-    return hgz_L
+        hz_L = previous_sheath_final_hidden_L + previous_sheath_visible_L # here 'previous_sheath_visible_L' is also the final visible length of the previous sheath
+    return hz_L
 
 
 def calculate_deltaL_preE(sucrose, leaf_L, amino_acids, mstruct, delta_t):
@@ -140,8 +140,8 @@ def calculate_leaf_Wmax(lamina_Lmax, fructan, mstruct):
 
     :Parameters:
         - `lamina_Lmax` (:class:`float`) - Maximal lamina length (m)
-        - `fructan` (:class:`float`) - Fructan in the hidden growing zone at the time of the previous leaf emergence (µmol C).
-        - `mstruct` (:class:`float`) - Mstruct of the hidden growing zone at the time of the previous leaf emergence (g).
+        - `fructan` (:class:`float`) - Fructan in the hidden zone at the time of the previous leaf emergence (µmol C).
+        - `mstruct` (:class:`float`) - Mstruct of the hidden zone at the time of the previous leaf emergence (g).
     :Returns:
         maximal leaf width (m)
     :Returns Type:
@@ -153,8 +153,8 @@ def calculate_SSLW(fructan, mstruct):
     """ Structural Specific Lamina Weight.
 
     :Parameters:
-        - `fructan` (:class:`float`) - Fructan in the hidden growing zone at the time of the previous leaf emergence (µmol C).
-        - `mstruct` (:class:`float`) - Mstruct of the hidden growing zone at the time of the previous leaf emergence (g).
+        - `fructan` (:class:`float`) - Fructan in the hidden zone at the time of the previous leaf emergence (µmol C).
+        - `mstruct` (:class:`float`) - Mstruct of the hidden zone at the time of the previous leaf emergence (g).
     :Returns:
         Structural Specific Leaf Weight (g m-2)
     :Returns Type:
@@ -175,45 +175,45 @@ def calculate_SSSW(SSLW):
     """
     return SSLW * parameters.ratio_SSSW_SSLW
 
-def calculate_leaf_emergence(leaf_L, hgz_L):
-    """Calculate if a given leaf has emerged from the hidden growing zone
+def calculate_leaf_emergence(leaf_L, hz_L):
+    """Calculate if a given leaf has emerged from the hidden zone
 
     :Parameters:
         - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (m)
+        - `hz_L` (:class:`float`) - Length of the hidden zone (m)
     :Returns:
         Specifies if the leaf has emerged (True) or not (False)
     :Returns Type:
         :class:`bool`
     """
-    return leaf_L > hgz_L
+    return leaf_L > hz_L
 
-def calculate_lamina_L(leaf_L, hgz_L):
-    """ Emerged lamina length given by the difference between leaf length and hidden growing zone length.
+def calculate_lamina_L(leaf_L, hz_L):
+    """ Emerged lamina length given by the difference between leaf length and hidden zone length.
 
     :Parameters:
         - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (m)
+        - `hz_L` (:class:`float`) - Length of the hidden zone (m)
     :Returns:
         lamina length (m)
     :Returns Type:
         :class:`float`
     """
-    lamina_L = leaf_L - hgz_L
+    lamina_L = leaf_L - hz_L
     if lamina_L <=0:
-        raise Warning('the leaf is shorther than the hgz')
+        raise Warning('the leaf is shorther than the hz')
     return max(0, lamina_L)
 
-def calculate_sheath_L(leaf_L, hgz_L, lamina_L):
-    """ Emerged sheath length. Assumes that leaf_L = hgz_L + sheath_L + lamina_L
+def calculate_sheath_L(leaf_L, hz_L, lamina_L):
+    """ Emerged sheath length. Assumes that leaf_L = hz_L + sheath_L + lamina_L
 
     :Parameters:
         - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `hgz_L` (:class:`float`) - Length of the hidden growing zone (m)
+        - `hz_L` (:class:`float`) - Length of the hidden zone (m)
         - `lamina_L` (:class:`float`) - Lamina length (m)
     :Returns:
         sheath length (m)
     :Returns Type:
         :class:`float`
     """
-    return leaf_L - hgz_L - lamina_L
+    return leaf_L - hz_L - lamina_L

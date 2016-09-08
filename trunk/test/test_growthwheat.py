@@ -35,13 +35,13 @@ import pandas as pd
 from growthwheat import model, simulation, converter
 
 INPUTS_DIRPATH = 'inputs'
-HGZ_INPUTS_FILENAME = 'hgzs_inputs.csv'
+HZ_INPUTS_FILENAME = 'hzs_inputs.csv'
 ORGAN_INPUTS_FILENAME = 'organs_inputs.csv'
 
 OUTPUTS_DIRPATH = 'outputs'
-DESIRED_HGZ_OUTPUTS_FILENAME = 'desired_hgz_outputs.csv'
+DESIRED_HZ_OUTPUTS_FILENAME = 'desired_hz_outputs.csv'
 DESIRED_ORGAN_OUTPUTS_FILENAME = 'desired_organ_outputs.csv'
-ACTUAL_HGZ_OUTPUTS_FILENAME = 'actual_hgz_outputs.csv'
+ACTUAL_HZ_OUTPUTS_FILENAME = 'actual_hz_outputs.csv'
 ACTUAL_ORGAN_OUTPUTS_FILENAME = 'actual_organ_outputs.csv'
 
 PRECISION = 6
@@ -73,23 +73,23 @@ def test_run():
     # create a simulation
     simulation_ = simulation.Simulation(delta_t=3600)
     # read inputs from Pandas dataframe
-    hgz_inputs_df = pd.read_csv(os.path.join(INPUTS_DIRPATH, HGZ_INPUTS_FILENAME))
+    hz_inputs_df = pd.read_csv(os.path.join(INPUTS_DIRPATH, HZ_INPUTS_FILENAME))
     organ_inputs_df = pd.read_csv(os.path.join(INPUTS_DIRPATH, ORGAN_INPUTS_FILENAME))
     # convert the dataframe to simulation inputs format
-    inputs = converter.from_dataframes(hgz_inputs_df, organ_inputs_df)
+    inputs = converter.from_dataframes(hz_inputs_df, organ_inputs_df)
     # initialize the simulation with the inputs
     simulation_.initialize(inputs)
     # convert the inputs to Pandas dataframe
-    hgz_inputs_reconverted_df, organ_inputs_reconverted_df = converter.to_dataframes(simulation_.inputs)
+    hz_inputs_reconverted_df, organ_inputs_reconverted_df = converter.to_dataframes(simulation_.inputs)
 ##    # compare inputs
-##    compare_actual_to_desired('inputs', hgz_inputs_reconverted_df, HGZ_INPUTS_FILENAME)
+##    compare_actual_to_desired('inputs', hz_inputs_reconverted_df, HZ_INPUTS_FILENAME)
 ##    compare_actual_to_desired('inputs', organ_inputs_reconverted_df, ORGAN_INPUTS_FILENAME)
     # run the simulation
     simulation_.run()
     # convert the outputs to Pandas dataframe
-    hgz_outputs_df, organ_outputs_df = converter.to_dataframes(simulation_.outputs)
+    hz_outputs_df, organ_outputs_df = converter.to_dataframes(simulation_.outputs)
     # compare outputs
-    compare_actual_to_desired('outputs', hgz_outputs_df, DESIRED_HGZ_OUTPUTS_FILENAME, ACTUAL_HGZ_OUTPUTS_FILENAME)
+    compare_actual_to_desired('outputs', hz_outputs_df, DESIRED_HZ_OUTPUTS_FILENAME, ACTUAL_HZ_OUTPUTS_FILENAME)
     compare_actual_to_desired('outputs', organ_outputs_df, DESIRED_ORGAN_OUTPUTS_FILENAME, ACTUAL_ORGAN_OUTPUTS_FILENAME)
 
 
