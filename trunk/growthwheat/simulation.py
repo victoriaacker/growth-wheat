@@ -28,16 +28,16 @@ import pandas as pd
 
 import model
 import logging
+import warnings
 import copy
-
 
 #: the inputs needed by GrowthWheat
 HGZ_INPUTS = ['leaf_is_growing', 'hgz_L', 'leaf_L', 'leaf_Lmax', 'leaf_Lem_prev', 'lamina_Lmax', 'sheath_Lmax', 'leaf_Wmax', 'SSLW', 'SSSW', 'leaf_is_emerged', 'sucrose', 'amino_acids', 'fructan', 'hgz_mstruct']
-ORGAN_INPUTS = ['length', 'is_growing']
+ORGAN_INPUTS = ['visible_length', 'is_growing', 'final_hidden_length']
 
 #: the outputs computed by GrowthWheat
 HGZ_OUTPUTS = ['leaf_is_growing', 'hgz_L', 'leaf_L', 'delta_leaf_L', 'leaf_Lmax', 'leaf_Lem_prev', 'lamina_Lmax', 'sheath_Lmax', 'leaf_Wmax', 'SSLW', 'SSSW', 'leaf_is_emerged', 'sucrose', 'amino_acids', 'fructan', 'hgz_mstruct']
-ORGAN_OUTPUTS = ['length', 'is_growing']
+ORGAN_OUTPUTS = ['visible_length', 'is_growing', 'final_hidden_length']
 
 #: the inputs and outputs of GrowthWheat.
 HGZ_INPUTS_OUTPUTS = sorted(set(HGZ_INPUTS + HGZ_OUTPUTS))
@@ -59,7 +59,9 @@ class Simulation(object):
         #: `inputs` is a dictionary of dictionaries:
         #:     {'hgz': {(plant_index, axis_label, metamer_index): {hgz_input_name: hgz_input_value, ...}, ...},
         #:      'organs': {(plant_index, axis_label, metamer_index, organ_label): {organ_input_name: organ_input_value, ...}, ...},
-        #:      'hgz_L_calculation': {(plant_index, axis_label, metamer_index): (previous_hgz_L, previous_sheath_L), ...}}
+        #:      'hgz_L_calculation': {(plant_index, axis_label, metamer_index): {'previous_hgz_length': previous_hgz_length,
+        #:                                                                       'previous_sheath_visible_length': previous_sheath_visible_length,
+        #:                                                                       'previous_sheath_final_hidden_length': previous_sheath_final_hidden_length}, ...}}
         #: See :TODO?
         #: for more information about the inputs.
         self.inputs = {}
@@ -69,7 +71,9 @@ class Simulation(object):
         #: `outputs` is a dictionary of dictionaries:
         #:     {'hgz': {(plant_index, axis_label, metamer_index): {hgz_input_name: hgz_input_value, ...}, ...},
         #:      'organs': {(plant_index, axis_label, metamer_index, organ_label): {organ_input_name: organ_input_value, ...}, ...},
-        #:      'hgz_L_calculation': {(plant_index, axis_label, metamer_index): (previous_hgz_L, previous_sheath_L), ...}}
+        #:      'hgz_L_calculation': {(plant_index, axis_label, metamer_index): {'previous_hgz_length': previous_hgz_length,
+        #:                                                                       'previous_sheath_visible_length': previous_sheath_visible_length,
+        #:                                                                       'previous_sheath_final_hidden_length': previous_sheath_final_hidden_length}, ...}}
         #: See :TODO?
         #: for more information about the inputs.
         self.outputs = {}
@@ -116,9 +120,10 @@ class Simulation(object):
                 prev_leaf_emerged = True
 
             # Update hidden growing zone length
-            previous_hgz_L = all_hgz_L_calculation_inputs[hgz_id][0]
-            previous_sheath_L = all_hgz_L_calculation_inputs[hgz_id][1]
-            curr_hgz_outputs['hgz_L'] = model.calculate_hgz_length(previous_hgz_L, previous_sheath_L)
+            previous_hgz_L = all_hgz_L_calculation_inputs[hgz_id]['previous_hgz_length']
+            previous_sheath_L = all_hgz_L_calculation_inputs[hgz_id]['previous_sheath_visible_length']
+            previous_sheath_final_hidden_L = all_hgz_L_calculation_inputs[hgz_id]['previous_sheath_final_hidden_length']
+            curr_hgz_outputs['hgz_L'] = model.calculate_hgz_length(previous_hgz_L, previous_sheath_L, previous_sheath_final_hidden_L)
             delta_hgz_L = hgz_inputs['hgz_L'] - curr_hgz_outputs['hgz_L']
 
             if not prev_leaf_emerged: #: Before the emergence of the previous leaf. Exponential-like growth.
@@ -154,14 +159,14 @@ class Simulation(object):
                             next_hgz_outputs['SSSW'] = model.calculate_SSSW(next_hgz_outputs['SSLW'])                                                      # Structural Specific Sheath Weight
                             self.outputs['hgz'][next_hgz_id] = next_hgz_outputs
                         else:
-                            raise Warning('No next hidden growing zone found for hgz {}'.format(hgz_id)) # TODO warning
+                            warnings.warn('No next hidden growing zone found for hgz {}.'.format(hgz_id))
 
                 #: Lamina has emerged and is growing
                 elif curr_hgz_outputs['leaf_is_emerged'] and all_organs_inputs[lamina_id]['is_growing']:
                     curr_organ_outputs = all_organs_outputs[lamina_id]
                     ## Length of emerged lamina
-                    lamina_L = model.calculate_lamina_L(hgz_inputs['leaf_L'], curr_hgz_outputs['hgz_L'])
-                    curr_organ_outputs['length'] = lamina_L
+                    lamina_L = min(model.calculate_lamina_L(hgz_inputs['leaf_L'], curr_hgz_outputs['hgz_L']), curr_hgz_outputs['lamina_Lmax'])
+                    curr_organ_outputs['visible_length'] = lamina_L
 
                     # Test end of growth
                     if lamina_L >= curr_hgz_outputs['lamina_Lmax']:
@@ -170,33 +175,36 @@ class Simulation(object):
                         sheath_id = hgz_id + tuple(['sheath'])
                         all_organs_outputs[sheath_id] = dict.fromkeys(ORGAN_OUTPUTS, 0)
                         all_organs_outputs[sheath_id]['is_growing'] = True
-                        print 'End of lamina {} elongation, sheath initialised'.format(hgz_id)
+                        print 'End of lamina {} elongation, sheath initialised.'.format(hgz_id)
 
                     # Update of lamina outputs
                     self.outputs['organs'][lamina_id] = curr_organ_outputs
 
                 # Mature lamina, growing sheath
-                elif curr_hgz_outputs['leaf_is_emerged'] and not all_organs_inputs[lamina_id]['is_growing']:
+                else:
                     sheath_id = hgz_id + tuple(['sheath'])
                     curr_organ_outputs = all_organs_outputs[sheath_id]
 
                     ## Length of emerged sheath
-                    lamina_L = self.outputs['organs'][hgz_id + tuple(['blade'])]['length']
-                    curr_organ_outputs['length'] = model.calculate_sheath_L(hgz_inputs['leaf_L'], curr_hgz_outputs['hgz_L'], lamina_L)
+                    lamina_L = self.outputs['organs'][hgz_id + tuple(['blade'])]['visible_length']
+                    sheath_L = min(model.calculate_sheath_L(hgz_inputs['leaf_L'], curr_hgz_outputs['hgz_L'], lamina_L), curr_hgz_outputs['sheath_Lmax'])
+                    curr_organ_outputs['visible_length'] = sheath_L
 
                     #: Test end of growth
                     if hgz_inputs['leaf_L'] >= curr_hgz_outputs['leaf_Lmax']: #TODO:  hgz_inputs['leaf_L'] ou  hgz_outputs['leaf_L']
+                        curr_organ_outputs['final_hidden_length'] = curr_hgz_outputs['hgz_L'] #: Length of the mature sheath = visible length + hgz length
                         curr_organ_outputs['is_growing'] = False
                         curr_hgz_outputs['leaf_is_growing'] = False
+                        print 'End of sheath and leaf {} elongation.'.format(hgz_id)
 
                     # Update of sheath outputs
                     self.outputs['organs'][sheath_id] = curr_organ_outputs
 
             # Update of leaf outputs, TODO: attention aux valeurs negatives
-            curr_hgz_outputs['leaf_L'] = min(curr_hgz_outputs['leaf_Lmax'], (hgz_inputs['leaf_L'] + delta_leaf_L))
-            curr_hgz_outputs['delta_leaf_L'] = min(delta_leaf_L, (curr_hgz_outputs['leaf_Lmax'] - hgz_inputs['leaf_L']))
+            curr_hgz_outputs['leaf_L'] = np.nanmin([curr_hgz_outputs['leaf_Lmax'], (hgz_inputs['leaf_L'] + delta_leaf_L)])
+            curr_hgz_outputs['delta_leaf_L'] = np.nanmin([delta_leaf_L, (curr_hgz_outputs['leaf_Lmax'] - hgz_inputs['leaf_L'])])
 
             if curr_hgz_outputs['leaf_is_growing']:
                 self.outputs['hgz'][hgz_id] = curr_hgz_outputs
-            else: # End of leaf growth, hgz compartments allocated to the sheath.
+            else: # End of leaf growth
                 del self.outputs['hgz'][hgz_id]

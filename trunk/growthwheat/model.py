@@ -6,7 +6,7 @@ from __future__ import division # use "//" to do integer division
     growthwheat.model
     ~~~~~~~~~~~~~
 
-    The module :mod:`growthwheat.model` defines the equations of the CN exchanges in a population of plants.
+    The module :mod:`growthwheat.model` defines the equations of the kinetic of leaf elongation according to CN status.
 
     :copyright: Copyright 2014-2015 INRA-ECOSYS, see AUTHORS.
     :license: TODO, see LICENSE for details.
@@ -26,18 +26,24 @@ from __future__ import division # use "//" to do integer division
 import math
 import parameters
 
-def calculate_hgz_length(previous_hgz_L, previous_sheath_L):
+def calculate_hgz_length(previous_hgz_L, previous_sheath_visible_L, previous_sheath_final_hidden_L):
     """ length of the hidden growing zone given by the previous sheaths.
 
     :Parameters:
         - `previous_hgz_L` (:class:`float`) - Length of the previous hidden growing zone (m). Could be 0 is no previous hgz found.
-        - `previous_sheath_L` (:class:`float`) - Length of the previous sheath (m). Could be either the length of the emerged part of the previous growing sheath or the length of the previous mature sheath.
+        - `previous_sheath_visible_L` (:class:`float`) - Visible length of the previous sheath (m).
+        - `previous_sheath_final_hidden_L` (:class:`float`) - Final hidden length of the previous sheath (m).
     :Returns:
         Hidden growing zone length (m)
     :Returns Type:
         :class:`float`
     """
-    return previous_hgz_L + previous_sheath_L
+    if previous_hgz_L:
+        hgz_L = previous_hgz_L + previous_sheath_visible_L
+    else:
+        hgz_L = previous_sheath_final_hidden_L + previous_sheath_visible_L # here 'previous_sheath_visible_L' is also the final visible length of the previous sheath
+    return hgz_L
+
 
 def calculate_deltaL_preE(sucrose, leaf_L, amino_acids, mstruct, delta_t):
     """ delta of leaf length over delta_t as a function of sucrose and amino acids, from initiation to the emergence of the previous leaf.
@@ -70,9 +76,8 @@ def calculate_deltaL_postE(leaf_L, leaf_Lmax, sucrose, delta_t):
     :Returns Type:
         :class:`float`
     """
-    # TODO: probleme unite au moins du temps car fonction calée sur des DD. Mais il y a autre chose
     if sucrose > 0:
-        delta_leaf_L = parameters.K * leaf_L * ((leaf_L - leaf_Lmax)**2)**parameters.N * delta_t
+        delta_leaf_L = parameters.K * leaf_L * max(((leaf_L / leaf_Lmax) - 1)**2, parameters.EPSILON**2)**(parameters.N) * delta_t
     else:
         delta_leaf_L = 0
     return delta_leaf_L
@@ -142,7 +147,7 @@ def calculate_leaf_Wmax(lamina_Lmax, fructan, mstruct):
     :Returns Type:
         :class:`float`
     """
-    return (0.0575 * lamina_Lmax - 0.12) * (parameters.EC_wmax * 2 * parameters.Ksslw/(parameters.Ksslw + (fructan / mstruct)) + (1-parameters.EC_wmax))
+    return (0.0575 * lamina_Lmax - 0.00012) * (parameters.EC_wmax * 2 * parameters.Ksslw/(parameters.Ksslw + (fructan / mstruct)) + (1-parameters.EC_wmax)) #TODO: a remplacer
 
 def calculate_SSLW(fructan, mstruct):
     """ Structural Specific Lamina Weight.
