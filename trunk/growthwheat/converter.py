@@ -88,19 +88,17 @@ def from_dataframes(hz_inputs, organ_inputs):
             previous_hz_length = previous_hz.loc[previous_hz.first_valid_index(), 'hz_L']
         else:
             previous_hz_length = None
-            warnings.warn('No previous hz found for hz {}.'.format(hz_inputs_id))
 
         # previous sheath length
         previous_sheath_id = tuple(list(hz_inputs_id[:2]) + [hz_inputs_id[-1]-1] + ['sheath'])
         if sheath_inputs_grouped.groups.has_key(previous_sheath_id):
             previous_sheath = sheath_inputs_grouped.get_group(previous_sheath_id)
             previous_sheath_visible_length = previous_sheath.loc[previous_sheath.first_valid_index(), 'visible_length']
-            if not previous_hz_length:
+            if not previous_hz_length: #: if no previous hz found, get the final hidden length of the previous sheath (assumes that no previous hz means a mature sheath)
                 previous_sheath_final_hidden_length = previous_sheath.loc[previous_sheath.first_valid_index(), 'final_hidden_length']
 
         else:
             previous_sheath_visible_length = 0
-            warnings.warn('No previous sheath found for hz {}.'.format(hz_inputs_id))
 
         hz_L_calculation_dict[hz_inputs_id] = {'previous_hz_length': previous_hz_length,
                                                  'previous_sheath_visible_length': previous_sheath_visible_length,
@@ -175,9 +173,7 @@ def from_MTG(g):
                     if organ_label not in LEAF_ORGANS_NAMES: continue
 
                     organ_inputs_from_mtg = g.get_vertex_property(organ_vid)
-                    if organ_label == 'sheath':
-                        growthwheat_hz_data_from_mtg_organs_data['leaf_Wlig'] = organ_inputs_from_mtg['diameter']
-                    elif organ_label == 'blade':
+                    if organ_label == 'blade':
                         growthwheat_hz_data_from_mtg_organs_data['lamina_Lmax'] = organ_inputs_from_mtg['shape_mature_length']
                         growthwheat_hz_data_from_mtg_organs_data['leaf_Wmax'] = organ_inputs_from_mtg['shape_max_width']
 
@@ -186,15 +182,14 @@ def from_MTG(g):
                     organ_inputs_dict = {}
                     is_valid_organ = True
                     for organ_input_name in simulation.ORGAN_INPUTS:
-
                         if organ_input_name in organ_inputs_from_mtg:
                             # use the input from the MTG
                             organ_inputs_dict[organ_input_name] = organ_inputs_from_mtg[organ_input_name]
                         else:
                             is_valid_organ = False
                             break
-                        if is_valid_organ:
-                            all_organ_dict[organ_id] = organ_inputs_dict
+                    if is_valid_organ:
+                        all_organ_dict[organ_id] = organ_inputs_dict
 
                 metamer_properties = g.get_vertex_property(metamer_vid)
                 if 'hz' in metamer_properties:
@@ -227,16 +222,14 @@ def from_MTG(g):
                             previous_hz_length = g.get_vertex_property(previous_metamer_vid)['hz']['hz_L']
                         else:
                             previous_hz_length = None
-                            warnings.warn('No previous hz found for hz {}.'.format(hz_id))
                         # previous sheath length
                         previous_metamer_components = {g.class_name(component_vid): component_vid for component_vid in g.components_at_scale(previous_metamer_vid, scale=4)}
                         if previous_metamer_components.has_key('sheath'):
                             previous_sheath_visible_length = g.get_vertex_property(previous_metamer_components['sheath'])['visible_length']
-                            if not previous_hz_length:
+                            if not previous_hz_length: #: if no previous hz found, get the final hidden length of the previous sheath (assumes that no previous hz means a mature sheath)
                                 previous_sheath_final_hidden_length = g.get_vertex_property(previous_metamer_components['sheath'])['final_hidden_length']
                         else:
                             previous_sheath_visible_length = 0
-                            warnings.warn('No previous sheath found for hz {}.'.format(hz_id))
 
                         hz_L_calculation_dict[(plant_index, axis_label, metamer_index)] = {'previous_hz_length': previous_hz_length,
                                                                                             'previous_sheath_visible_length': previous_sheath_visible_length,
@@ -341,7 +334,7 @@ def update_MTG(g, geometrical_model, inputs=None, outputs=None):
                     organ_label = g.label(organ_vid)
                     if organ_label not in LEAF_ORGANS_NAMES: continue
 
-                    if len(mtg_organs_data_from_growthwheat_hz_data) != 0:
+                    if len(mtg_organs_data_from_growthwheat_hz_data) != 0: # TODO: pq ce test?
                         if organ_label == 'blade':
                             g.property('shape_mature_length')[organ_vid] = mtg_organs_data_from_growthwheat_hz_data['lamina_Lmax']
                             g.property('shape_max_width')[organ_vid] = mtg_organs_data_from_growthwheat_hz_data['leaf_Wmax']

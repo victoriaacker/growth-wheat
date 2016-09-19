@@ -33,11 +33,11 @@ import copy
 
 #: the inputs needed by GrowthWheat
 HZ_INPUTS = ['leaf_is_growing', 'hz_L', 'leaf_L', 'leaf_Lmax', 'leaf_Lem_prev', 'lamina_Lmax', 'sheath_Lmax', 'leaf_Wmax', 'SSLW', 'SSSW', 'leaf_is_emerged', 'sucrose', 'amino_acids', 'fructan', 'hz_mstruct']
-ORGAN_INPUTS = ['visible_length', 'is_growing', 'final_hidden_length']
+ORGAN_INPUTS = ['visible_length', 'is_growing', 'final_hidden_length', 'length']
 
 #: the outputs computed by GrowthWheat
 HZ_OUTPUTS = ['leaf_is_growing', 'hz_L', 'leaf_L', 'delta_leaf_L', 'leaf_Lmax', 'leaf_Lem_prev', 'lamina_Lmax', 'sheath_Lmax', 'leaf_Wmax', 'SSLW', 'SSSW', 'leaf_is_emerged', 'sucrose', 'amino_acids', 'fructan', 'hz_mstruct']
-ORGAN_OUTPUTS = ['visible_length', 'is_growing', 'final_hidden_length']
+ORGAN_OUTPUTS = ['visible_length', 'is_growing', 'final_hidden_length', 'length']
 
 #: the inputs and outputs of GrowthWheat.
 HZ_INPUTS_OUTPUTS = sorted(set(HZ_INPUTS + HZ_OUTPUTS))
@@ -142,7 +142,6 @@ class Simulation(object):
                     if curr_hz_outputs['leaf_is_emerged']: # Initialise lamina outputs
                         all_organs_outputs[lamina_id] = dict.fromkeys(ORGAN_OUTPUTS, 0)
                         all_organs_outputs[lamina_id]['is_growing'] = True
-                        print 'leaf {} has emerged'.format(hz_id)
 
                         # Initialise variables for the next hidden zone
                         next_hz_id = tuple(list(hz_id[:2]) + [hz_id[2] + 1])
@@ -171,11 +170,12 @@ class Simulation(object):
                     # Test end of growth
                     if lamina_L >= curr_hz_outputs['lamina_Lmax']:
                         curr_organ_outputs['is_growing'] = False
+                        curr_organ_outputs['final_hidden_length'] = 0
+                        curr_organ_outputs['length'] = lamina_L
                         # Initialise sheath outputs
                         sheath_id = hz_id + tuple(['sheath'])
                         all_organs_outputs[sheath_id] = dict.fromkeys(ORGAN_OUTPUTS, 0)
                         all_organs_outputs[sheath_id]['is_growing'] = True
-                        print 'End of lamina {} elongation, sheath initialised.'.format(hz_id)
 
                     # Update of lamina outputs
                     self.outputs['organs'][lamina_id] = curr_organ_outputs
@@ -192,10 +192,10 @@ class Simulation(object):
 
                     #: Test end of growth
                     if hz_inputs['leaf_L'] >= curr_hz_outputs['leaf_Lmax']: #TODO:  hz_inputs['leaf_L'] ou  hz_outputs['leaf_L']
-                        curr_organ_outputs['final_hidden_length'] = curr_hz_outputs['hz_L'] #: Length of the mature sheath = visible length + hz length
+                        curr_organ_outputs['final_hidden_length'] = curr_hz_outputs['hz_L']
+                        curr_organ_outputs['length'] = sheath_L + curr_organ_outputs['final_hidden_length'] #: Length of the mature sheath = visible length + hz length
                         curr_organ_outputs['is_growing'] = False
                         curr_hz_outputs['leaf_is_growing'] = False
-                        print 'End of sheath and leaf {} elongation.'.format(hz_id)
 
                     # Update of sheath outputs
                     self.outputs['organs'][sheath_id] = curr_organ_outputs
