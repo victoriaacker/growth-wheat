@@ -34,21 +34,23 @@ from openalea.mtg import io, fat_mtg
 import simulation
 
 #: the columns which define the topology in the input/output dataframe
-HZ_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer']
-ORGAN_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ'] # exposed organs
+HIDDENZONE_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer']
+ORGAN_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ'] # visible part of organs
+ROOT_TOPOLOGY_COLUMNS = ['plant', 'axis']
 
 #: the name of the organs representing a leaf
 LEAF_ORGANS_NAMES = set(['sheath', 'blade'])
 
 
-def from_dataframes(hz_inputs, organ_inputs):
+def from_dataframes(hiddenzone_inputs, organ_inputs, root_inputs):
     """
     Convert inputs/outputs from Pandas dataframe to Growth-Wheat format.
 
     :Parameters:
 
-        - `hz_inputs` (:class:`pandas.DataFrame`) - Hidden zone inputs dataframe to convert, with one line by Hidden zone.
+        - `hiddenzone_inputs` (:class:`pandas.DataFrame`) - Hidden zone inputs dataframe to convert, with one line by hidden zone.
         - `organ_inputs` (:class:`pandas.DataFrame`) - Exposed organ inputs dataframe to convert, with one line by organ.
+        - `root_inputs` (:class:`pandas.DataFrame`) - Root inputs dataframe to convert, with one line by root.
 
     :Returns:
         The inputs in a dictionary.
@@ -59,11 +61,13 @@ def from_dataframes(hz_inputs, organ_inputs):
     .. seealso:: see :attr:`simulation.Simulation.inputs` for the structure of Growth-Wheat inputs.
 
     """
-    all_hz_dict = {}
+    all_hiddenzone_dict = {}
     all_organ_dict = {}
-    hz_L_calculation_dict = {}
-    hz_inputs_columns = hz_inputs.columns.difference(HZ_TOPOLOGY_COLUMNS)
+    all_root_dict = {}
+    hiddenzone_L_calculation_dict = {}
+    hiddenzone_inputs_columns = hiddenzone_inputs.columns.difference(HIDDENZONE_TOPOLOGY_COLUMNS)
     organ_inputs_columns = organ_inputs.columns.difference(ORGAN_TOPOLOGY_COLUMNS)
+    root_inputs_columns = root_inputs.columns.difference(ROOT_TOPOLOGY_COLUMNS)
     sheath_inputs_grouped = organ_inputs[organ_inputs.organ == 'sheath'].groupby(ORGAN_TOPOLOGY_COLUMNS)
     sheath_inputs_grouped_all_metamers = organ_inputs[organ_inputs.organ == 'sheath'].groupby(['plant', 'axis'])
 
@@ -73,38 +77,20 @@ def from_dataframes(hz_inputs, organ_inputs):
         organ_inputs_dict = organ_inputs_series[organ_inputs_columns].to_dict()
         all_organ_dict[organ_inputs_id] = organ_inputs_dict
 
-    hz_inputs_grouped = hz_inputs.groupby(HZ_TOPOLOGY_COLUMNS)
-    for hz_inputs_id, hz_inputs_group in hz_inputs_grouped:
-        # hz
-        hz_inputs_series = hz_inputs_group.loc[hz_inputs_group.first_valid_index()]
-        hz_inputs_dict = hz_inputs_series[hz_inputs_columns].to_dict()
-        all_hz_dict[hz_inputs_id] = hz_inputs_dict
+    hiddenzone_inputs_grouped = hiddenzone_inputs.groupby(HIDDENZONE_TOPOLOGY_COLUMNS)
+    for hiddenzone_inputs_id, hiddenzone_inputs_group in hiddenzone_inputs_grouped:
+        # hiddenzone
+        hiddenzone_inputs_series = hiddenzone_inputs_group.loc[hiddenzone_inputs_group.first_valid_index()]
+        hiddenzone_inputs_dict = hiddenzone_inputs_series[hiddenzone_inputs_columns].to_dict()
+        all_hiddenzone_dict[hiddenzone_inputs_id] = hiddenzone_inputs_dict
 
-        # Get lengths required for the calculation of the hz length
-        previous_hz_id = tuple(list(hz_inputs_id[:2]) + [hz_inputs_id[-1]-1])
-        # previous hz length
-        if hz_inputs_grouped.groups.has_key(previous_hz_id):
-            previous_hz = hz_inputs_grouped.get_group(previous_hz_id)
-            previous_hz_length = previous_hz.loc[previous_hz.first_valid_index(), 'hz_L']
-        else:
-            previous_hz_length = None
+    for root_inputs_id, root_inputs_group in root_inputs.groupby(ROOT_TOPOLOGY_COLUMNS):
+        # root
+        root_inputs_series = root_inputs_group.loc[root_inputs_group.first_valid_index()]
+        root_inputs_dict = root_inputs_series[root_inputs_columns].to_dict()
+        all_root_dict[root_inputs_id] = root_inputs_dict
 
-        # previous sheath length
-        previous_sheath_id = tuple(list(hz_inputs_id[:2]) + [hz_inputs_id[-1]-1] + ['sheath'])
-        if sheath_inputs_grouped.groups.has_key(previous_sheath_id):
-            previous_sheath = sheath_inputs_grouped.get_group(previous_sheath_id)
-            previous_sheath_visible_length = previous_sheath.loc[previous_sheath.first_valid_index(), 'visible_length']
-            if not previous_hz_length: #: if no previous hz found, get the final hidden length of the previous sheath (assumes that no previous hz means a mature sheath)
-                previous_sheath_final_hidden_length = previous_sheath.loc[previous_sheath.first_valid_index(), 'final_hidden_length']
-
-        else:
-            previous_sheath_visible_length = 0
-
-        hz_L_calculation_dict[hz_inputs_id] = {'previous_hz_length': previous_hz_length,
-                                                 'previous_sheath_visible_length': previous_sheath_visible_length,
-                                                 'previous_sheath_final_hidden_length': previous_sheath_final_hidden_length} #TODO: ajouter les entrenoeuds
-
-    return {'hz': all_hz_dict, 'organs': all_organ_dict, 'hz_L_calculation': hz_L_calculation_dict}
+    return {'hiddenzone': all_hiddenzone_dict, 'organs': all_organ_dict, 'roots': all_root_dict}
 
 def to_dataframes(data_dict):
     """
@@ -115,7 +101,7 @@ def to_dataframes(data_dict):
         - `data_dict` (:class:`dict`) - The outputs in Growth-Wheat format.
 
     :Returns:
-        One dataframe for hz outputs and one dataframe for organ outputs.
+        One dataframe for hiddenzone outputs and one dataframe for organ outputs.
 
     :Returns Type:
         :class:`tuple` of :class:`pandas.DataFrame`
@@ -124,8 +110,9 @@ def to_dataframes(data_dict):
 
     """
     dataframes_dict = {}
-    for (current_key, current_topology_columns, current_outputs_names) in (('hz', HZ_TOPOLOGY_COLUMNS, simulation.HZ_OUTPUTS),
-                                                                           ('organs', ORGAN_TOPOLOGY_COLUMNS, simulation.ORGAN_OUTPUTS)):
+    for (current_key, current_topology_columns, current_outputs_names) in (('hiddenzone', HIDDENZONE_TOPOLOGY_COLUMNS, simulation.HIDDENZONE_OUTPUTS),
+                                                                           ('organs', ORGAN_TOPOLOGY_COLUMNS, simulation.ORGAN_OUTPUTS),
+                                                                           ('roots', ROOT_TOPOLOGY_COLUMNS, simulation.ROOT_OUTPUTS)):
         current_data_dict = data_dict[current_key]
         current_ids_df = pd.DataFrame(current_data_dict.keys(), columns=current_topology_columns)
         current_data_df = pd.DataFrame(current_data_dict.values())
@@ -135,7 +122,7 @@ def to_dataframes(data_dict):
         current_df = current_df.reindex_axis(current_columns_sorted, axis=1, copy=False)
         current_df.reset_index(drop=True, inplace=True)
         dataframes_dict[current_key] = current_df
-    return dataframes_dict['hz'], dataframes_dict['organs']
+    return dataframes_dict['hiddenzone'], dataframes_dict['organs'], dataframes_dict['roots']
 
 
 def from_MTG(g):
@@ -145,7 +132,7 @@ def from_MTG(g):
     :Parameters:
 
         - g (:class:`openalea.mtg.mtg.MTG`) - A MTG which contains the inputs
-          of Growth-Wheat. These inputs are: :mod:`simulation.HZ_INPUTS` and :mod:`simulation.ORGAN_INPUTS`.
+          of Growth-Wheat. These inputs are: :mod:`simulation.HIDDENZONE_INPUTS` and :mod:`simulation.ORGAN_INPUTS`.
 
     :Returns:
         The inputs of Growth-Wheat.
@@ -156,26 +143,40 @@ def from_MTG(g):
     .. seealso:: see :attr:`simulation.Simulation.inputs` for the structure of Growth-Wheat inputs.
 
     """
-    all_hz_dict = {}
+    all_hiddenzone_dict = {}
     all_organ_dict = {}
-    hz_L_calculation_dict = {}
+    all_root_dict = {}
 
     for plant_vid in g.components_iter(g.root):
         plant_index = int(g.index(plant_vid))
         for axis_vid in g.components_iter(plant_vid):
             axis_label = g.label(axis_vid)
-            axis_id = (plant_index, axis_label)
+
+            # Roots
+            axis_properties = g.get_vertex_property(axis_vid)
+            if 'roots' in axis_properties:
+                roots_id = (plant_index, axis_label)
+                root_inputs_from_mtg = axis_properties['roots']
+                roots_inputs_dict = {}
+
+                is_valid_roots = True
+                for roots_input_name in simulation.ROOT_INPUTS:
+                    if roots_input_name in root_inputs_from_mtg:
+                        # use the input from the MTG
+                        roots_inputs_dict[roots_input_name] = root_inputs_from_mtg[roots_input_name]
+                    else:
+                        is_valid_roots = False
+                        break
+                if is_valid_roots:
+                    all_root_dict[roots_id] = roots_inputs_dict
+
             for metamer_vid in g.components_iter(axis_vid):
                 metamer_index = int(g.index(metamer_vid))
-                growthwheat_hz_data_from_mtg_organs_data = {}
                 for organ_vid in g.components_iter(metamer_vid):
                     organ_label = g.label(organ_vid)
                     if organ_label not in LEAF_ORGANS_NAMES: continue
 
                     organ_inputs_from_mtg = g.get_vertex_property(organ_vid)
-                    if organ_label == 'blade':
-                        growthwheat_hz_data_from_mtg_organs_data['lamina_Lmax'] = organ_inputs_from_mtg['shape_mature_length']
-                        growthwheat_hz_data_from_mtg_organs_data['leaf_Wmax'] = organ_inputs_from_mtg['shape_max_width']
 
                     organ_id = (plant_index, axis_label, metamer_index, organ_label)
                     organ_inputs_from_mtg = g.get_vertex_property(organ_vid)
@@ -188,73 +189,47 @@ def from_MTG(g):
                         else:
                             is_valid_organ = False
                             break
+                    # temp
+                    for element_vid in g.components_iter(organ_vid):
+                        if g.get_vertex_property(element_vid)['label'] in ('StemElement', 'LeafElement1'):
+                            organ_inputs_dict['green_area'] = g.get_vertex_property(element_vid)['green_area']
+
                     if is_valid_organ:
                         all_organ_dict[organ_id] = organ_inputs_dict
 
                 metamer_properties = g.get_vertex_property(metamer_vid)
-                if 'hz' in metamer_properties:
-                    previous_metamer_vid = g.parent(metamer_vid)
-                    hz_id = (plant_index, axis_label, metamer_index)
-                    hz_inputs_from_mtg = metamer_properties['hz']
-                    hz_inputs_dict = {}
+                if 'hiddenzone' in metamer_properties:
+                    hiddenzone_id = (plant_index, axis_label, metamer_index)
+                    hiddenzone_inputs_from_mtg = metamer_properties['hiddenzone']
+                    hiddenzone_inputs_dict = {}
 
-                    is_valid_hz = True
-                    for hz_input_name in simulation.HZ_INPUTS:
-                        if hz_input_name in hz_inputs_from_mtg:
+                    is_valid_hiddenzone = True
+                    for hiddenzone_input_name in simulation.HIDDENZONE_INPUTS:
+                        if hiddenzone_input_name in hiddenzone_inputs_from_mtg:
                             # use the input from the MTG
-                            hz_inputs_dict[hz_input_name] = hz_inputs_from_mtg[hz_input_name]
-                        elif hz_input_name in growthwheat_hz_data_from_mtg_organs_data:
-                            hz_inputs_dict[hz_input_name] = growthwheat_hz_data_from_mtg_organs_data[hz_input_name]
+                            hiddenzone_inputs_dict[hiddenzone_input_name] = hiddenzone_inputs_from_mtg[hiddenzone_input_name]
                         else:
-                            # use the input from the dataframe
-                            if hz_input_name in hz_inputs_group_series:
-                                hz_inputs_dict[hz_input_name] = hz_inputs_group_series[hz_input_name]
-                            else:
-                                is_valid_hz = False
-                                break
-                    if is_valid_hz:
-                        all_hz_dict[hz_id] = hz_inputs_dict
+                            is_valid_hiddenzone = False
+                            break
+                    if is_valid_hiddenzone:
+                        all_hiddenzone_dict[hiddenzone_id] = hiddenzone_inputs_dict
 
-                    # Get lengths required for the calculation of the hz length
-                    if previous_metamer_vid is not None:
-                        # previous hz length
-                        if g.get_vertex_property(previous_metamer_vid).has_key('hz'):
-                            previous_hz_length = g.get_vertex_property(previous_metamer_vid)['hz']['hz_L']
-                        else:
-                            previous_hz_length = None
-                        # previous sheath length
-                        previous_metamer_components = {g.class_name(component_vid): component_vid for component_vid in g.components_at_scale(previous_metamer_vid, scale=4)}
-                        if previous_metamer_components.has_key('sheath'):
-                            previous_sheath_visible_length = g.get_vertex_property(previous_metamer_components['sheath'])['visible_length']
-                            if not previous_hz_length: #: if no previous hz found, get the final hidden length of the previous sheath (assumes that no previous hz means a mature sheath)
-                                previous_sheath_final_hidden_length = g.get_vertex_property(previous_metamer_components['sheath'])['final_hidden_length']
-                        else:
-                            previous_sheath_visible_length = 0
+    return {'hiddenzone': all_hiddenzone_dict, 'organs': all_organ_dict, 'roots': all_root_dict}
 
-                        hz_L_calculation_dict[(plant_index, axis_label, metamer_index)] = {'previous_hz_length': previous_hz_length,
-                                                                                            'previous_sheath_visible_length': previous_sheath_visible_length,
-                                                                                            'previous_sheath_final_hidden_length': previous_sheath_final_hidden_length} #TODO: ajouter les entrenoeuds
-                    else:
-                        raise Exception('No previous metamer found for hz {}.'.format(hz_id))
-
-    return {'hz': all_hz_dict, 'organs': all_organ_dict, 'hz_L_calculation': hz_L_calculation_dict}
-
-def update_MTG(g, geometrical_model, inputs=None, outputs=None):
+def update_MTG(g, inputs=None, outputs=None):
     """
     Update a MTG from Growth-Wheat inputs and outputs.
 
     :Parameters:
             - `g` (:class:`openalea.mtg.mtg.MTG`) - The MTG to update from the inputs and outputs of Growth-Wheat.
 
-            - `geometrical_model` (:func:`geometrical_model`) - The model which deals with geometry.
-              This model must implement a method `add_metamer(mtg, plant_index, axis_label)` to add
-              a metamer to a specific axis of a plant in a MTG.
+
 
             - inputs (:class:`dict` of :class:`dict`) - Growth-Wheat inputs.
-            These inputs are: :mod:`simulation.HZ_INPUTS` and :mod:`simulation.ORGAN_INPUTS`.
+            These inputs are: :mod:`simulation.HIDDENZONE_INPUTS` and :mod:`simulation.ORGAN_INPUTS`.
 
             - outputs (:class:`dict` of :class:`dict`) - Growth-Wheat outputs.
-            These outputs are: :mod:`simulation.HZ_OUTPUTS` and :mod:`simulation.ORGAN_OUTPUTS`.
+            These outputs are: :mod:`simulation.HIDDENZONE_OUTPUTS` and :mod:`simulation.ORGAN_OUTPUTS`.
 
     .. seealso::
 
@@ -265,82 +240,68 @@ def update_MTG(g, geometrical_model, inputs=None, outputs=None):
 
     # add the properties if needed
     property_names = g.property_names()
-    for growthwheat_data_name in set(simulation.HZ_INPUTS_OUTPUTS + simulation.ORGAN_INPUTS_OUTPUTS):
+    for growthwheat_data_name in set(simulation.HIDDENZONE_INPUTS_OUTPUTS + simulation.ORGAN_INPUTS_OUTPUTS):
         if growthwheat_data_name not in property_names:
             g.add_property(growthwheat_data_name)
-    if 'hz' not in property_names:
-        g.add_property('hz')
 
     if inputs:
-        hzs_data_dict = inputs['hz']
-        hzs_data_names = simulation.HZ_INPUTS
+        hiddenzones_data_dict = inputs['hiddenzone']
+        hiddenzones_data_names = simulation.HIDDENZONE_INPUTS
         organs_data_dict = inputs['organs']
         organs_data_names = simulation.ORGAN_INPUTS
+        roots_data_dict = inputs['roots']
+        roots_data_names = simulation.ROOT_INPUTS
     elif outputs:
-        hzs_data_dict = outputs['hz']
-        hzs_data_names = simulation.HZ_OUTPUTS
+        hiddenzones_data_dict = outputs['hiddenzone']
+        hiddenzones_data_names = simulation.HIDDENZONE_OUTPUTS
         organs_data_dict = outputs['organs']
         organs_data_names = simulation.ORGAN_OUTPUTS
+        roots_data_dict = outputs['roots']
+        roots_data_names = simulation.ROOT_OUTPUTS
     else:
         raise Exception('Both inputs and outputs were found to be None')
-
-    # add new metamer(s)
-    axis_to_metamers_mapping = {}
-    for metamer_id in sorted(hzs_data_dict.iterkeys()):
-        axis_id = (metamer_id[0], metamer_id[1])
-        if axis_id not in axis_to_metamers_mapping:
-            axis_to_metamers_mapping[axis_id] = []
-        axis_to_metamers_mapping[axis_id].append(metamer_id)
-
-    axis_to_old_metamers_mapping = {}
-    for plant_vid in g.components_iter(g.root):
-        plant_index = int(g.index(plant_vid))
-        for axis_vid in g.components_iter(plant_vid):
-            axis_label = g.label(axis_vid)
-            metamer_ids = set([(plant_index, axis_label, int(g.index(metamer_vid))) for metamer_vid in g.components_iter(axis_vid)])
-            if (plant_index, axis_label) not in axis_to_metamers_mapping: continue
-            new_metamer_ids = set(axis_to_metamers_mapping[(plant_index, axis_label)]).difference(metamer_ids)
-            for new_metamer_id in new_metamer_ids:
-                geometrical_model.add_metamer(g, plant_index, axis_label)
 
     # update the properties of the MTG
     for plant_vid in g.components_iter(g.root):
         plant_index = int(g.index(plant_vid))
         for axis_vid in g.components_iter(plant_vid):
             axis_label = g.label(axis_vid)
+
+            root_id = (plant_index, axis_label)
+            if root_id in roots_data_dict:
+                root_outputs_dict = roots_data_dict[root_id]
+                axis_properties = g.get_vertex_property(axis_vid)
+                if 'roots' not in axis_properties:
+                    g.property('roots')[axis_vid] = {}
+                for root_data in (roots_data_dict[root_id], roots_data_dict[root_id]):
+                    for root_data_name, root_data_value in root_data.iteritems():
+                            g.property('roots')[axis_vid][root_data_name] = root_data_value
+
             for metamer_vid in g.components_iter(axis_vid):
                 metamer_index = int(g.index(metamer_vid))
 
-                hz_id = (plant_index, axis_label, metamer_index)
-                mtg_organs_data_from_growthwheat_hz_data = {}
-                if hz_id in hzs_data_dict:
-                    hz_outputs_dict = hzs_data_dict[hz_id]
+                hiddenzone_id = (plant_index, axis_label, metamer_index)
+                if hiddenzone_id in hiddenzones_data_dict:
+                    hiddenzone_outputs_dict = hiddenzones_data_dict[hiddenzone_id]
                     metamer_properties = g.get_vertex_property(metamer_vid)
-                    if 'hz' not in metamer_properties:
-                        g.property('hz')[metamer_vid] = {}
+                    if 'hiddenzone' not in metamer_properties:
+                        g.property('hiddenzone')[metamer_vid] = {}
 
-                    for hz_data in (hzs_data_dict[hz_id], hzs_data_dict[hz_id]):
-                        for hz_data_name, hz_data_value in hz_data.iteritems():
-                            if hz_data_name not in ('lamina_Lmax', 'leaf_Wmax'):
-                                g.property('hz')[metamer_vid][hz_data_name] = hz_data_value
-                            else:
-                                mtg_organs_data_from_growthwheat_hz_data[hz_data_name] = hz_data_value
-
-                elif 'hz' in g.get_vertex_property(metamer_vid):
-                    # remove the 'hz' property from this metamer
-                    del g.property('hz')[metamer_vid]
+                    for hiddenzone_data in (hiddenzones_data_dict[hiddenzone_id], hiddenzones_data_dict[hiddenzone_id]):
+                        for hiddenzone_data_name, hiddenzone_data_value in hiddenzone_data.iteritems():
+                                g.property('hiddenzone')[metamer_vid][hiddenzone_data_name] = hiddenzone_data_value
 
                 for organ_vid in g.components_iter(metamer_vid):
                     organ_label = g.label(organ_vid)
                     if organ_label not in LEAF_ORGANS_NAMES: continue
-
-                    if len(mtg_organs_data_from_growthwheat_hz_data) != 0: # TODO: pq ce test?
-                        if organ_label == 'blade':
-                            g.property('shape_mature_length')[organ_vid] = mtg_organs_data_from_growthwheat_hz_data['lamina_Lmax']
-                            g.property('shape_max_width')[organ_vid] = mtg_organs_data_from_growthwheat_hz_data['leaf_Wmax']
 
                     organ_id = (plant_index, axis_label, metamer_index, organ_label)
                     organ_data_dict = organs_data_dict.get(organ_id, {})
                     if organ_data_dict:
                         for organ_data_name in organs_data_names:
                             g.property(organ_data_name)[organ_vid] = organ_data_dict.get(organ_data_name)
+
+                            # Write properties in element scale #: TODO: voir ce qui ce passe avec +sieurs élements
+                            for element_vid in g.components_iter(organ_vid):
+                                if g.get_vertex_property(element_vid)['label'] in ('StemElement', 'LeafElement1'):
+                                    g.property(organ_data_name)[element_vid] = organ_data_dict.get(organ_data_name)

@@ -23,15 +23,17 @@ from __future__ import division # use "//" to do integer division
         $Id$
 """
 
-EC_wmax = 0.3 #: variation de + ou - 15% de maximal leaf width (SU)
-Y0 = 137 #: Facteur agrandissement feuille en mode automate (SU)
-K = 5.5354e-06 #: Parameter of the growth function after previous leaf emergence (s-1)
-N = 0.4612 #: Parameter of the growth function after previous leaf emergence
-Ksslw = 4160 #10000 #: Affinité SSLW aux fructanes (µmol C g-1)
-Kc = 145.6 #350 #: affinité du RER au C (µmol/g)
-Kn = 16.64 #40 #: affinité du RER à N (µmol/g)
-min_SSLW = 22 #: g m-2
-max_SSLW = 50 #: g m-2
-ratio_SSSW_SSLW = 5 # ratio gaine/limbe des matieres seches structurales spécifiques (calculé depuis les données de J. Bertheloot, 2004)
-RERmax = 4e-06 #: s-1
-EPSILON = 0.01 #: A threshold, expressed in relative leaf length that remains to be produced, under which the rate of leaf elongation will be assumed as constant
+ALPHA = 1.537e-02                     #: Parameter of the relation between leaf mass and leaf length (g m^(-BETA))
+BETA = 1.28                           #: Parameter of the relation between leaf mass and leaf length (dimensionless)
+RATIO_SUCROSE_MSTRUCT =  58656.667    #: Amount of C under carbohydrate form (µmol C) in 1 g of mstruct (of CN), calculation = ( (92.3e-2)/(12) - (7.7*4.15e-2)/(14*1.25) ) *1e6
+RATIO_AMINO_ACIDS_MSTRUCT  = 5500.0   #: Amount of N under amino acid/protein form (µmol N) in 1 g of mstruct (of CN), calculation = (7.7e-2)/(14)* 1e6
+RATIO_CN_MSTRUCT = 0.416              #: Contribution of C and N masses to mstruct
+RATIO_MSTRUCT_DM = 0.8                #: Ratio mstruc/dry matter (dimensionless)
+
+## Roots
+VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry matter growth (µmol C s-1 g-1 MS)
+K_ROOTS_GROWTH = 1250                 #: Affinity coefficient of root structural dry matter growth (µmol C g-1 MS)
+C_MOLAR_MASS = 12                     #: Carbon molar mass (g mol-1)
+N_MOLAR_MASS = 14                     #: Nitrogen molar mass (g mol-1)
+RATIO_C_MSTRUCT_ROOTS = 0.384         #: Mean contribution of carbon to root structural dry mass (g C g-1 Mstruct)
+RATIO_N_MSTRUCT_ROOTS_ = 0.02         #: Mean contribution of nitrogen to root structural dry mass (g N g-1 Mstruct)

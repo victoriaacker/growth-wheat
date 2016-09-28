@@ -32,43 +32,41 @@ import os
 import numpy as np
 import pandas as pd
 
-from growthwheat import simulation as growthwheat_simulation, model as growthwheat_model, converter as growthwheat_converter, interface as  growthwheat_interface
+from growthwheat import simulation, model, converter
 
 INPUTS_DIRPATH = 'inputs'
 
 # growthwheat inputs at t0
-HZ_INPUTS_FILEPATH = os.path.join(INPUTS_DIRPATH, 'hzs_inputs.csv')
+HIDDENZONE_INPUTS_FILEPATH = os.path.join(INPUTS_DIRPATH, 'hiddenzones_inputs.csv')
 ORGAN_INPUTS_FILEPATH = os.path.join(INPUTS_DIRPATH, 'organs_inputs.csv')
+ROOT_INPUTS_FILEPATH = os.path.join(INPUTS_DIRPATH, 'roots_inputs.csv')
 
 # growthwheat outputs
 OUTPUTS_DIRPATH = 'outputs'
-HZ_OUTPUTS_FILENAME = 'hz_outputs.csv'
-ORGAN_OUTPUTS_FILENAME = 'organ_outputs.csv'
-
-# define the time step in hours for each growthwheat
-growthwheat_ts = 1
+HGZ_OUTPUTS_FILENAME = 'hiddenzones_outputs.csv'
+ORGAN_OUTPUTS_FILENAME = 'organs_outputs.csv'
+ROOT_OUTPUTS_FILENAME = 'roots_outputs.csv'
 
 # read growthwheat inputs at t0
-growthwheat_hzs_inputs_t0 = pd.read_csv(HZ_INPUTS_FILEPATH)
-growthwheat_organ_inputs_t0 = pd.read_csv(ORGAN_INPUTS_FILEPATH)
+hiddenzones_inputs_t0 = pd.read_csv(HIDDENZONE_INPUTS_FILEPATH)
+organ_inputs_t0 = pd.read_csv(ORGAN_INPUTS_FILEPATH)
+root_inputs_t0 = pd.read_csv(ROOT_INPUTS_FILEPATH)
 
 OUTPUTS_PRECISION = 6
 
 if __name__ == '__main__':
 
     # Create population
-    simulation_ = growthwheat_simulation.Simulation(delta_t=3600)
-    # read inputs from Pandas dataframe
-    hz_inputs_df = growthwheat_hzs_inputs_t0
-    organ_inputs_df = growthwheat_organ_inputs_t0
+    simulation_ = simulation.Simulation(delta_t=3600)
     # convert the dataframe to simulation inputs format
-    inputs = growthwheat_converter.from_dataframes(hz_inputs_df, organ_inputs_df)
+    inputs = converter.from_dataframes(hiddenzones_inputs_t0, organ_inputs_t0, root_inputs_t0)
     # initialize the simulation with the inputs
     simulation_.initialize(inputs)
     # run the simulation
     simulation_.run()
     # convert the outputs to Pandas dataframe
-    hz_outputs_df, organ_outputs_df = growthwheat_converter.to_dataframes(simulation_.outputs)
+    hiddenzones_outputs, organs_outputs, roots_outputs = converter.to_dataframes(simulation_.outputs)
     # write the dataframe to CSV
-    hz_outputs_df.to_csv(os.path.join(OUTPUTS_DIRPATH, HZ_OUTPUTS_FILENAME), index=False, na_rep='NA', float_format='%.{}f'.format(OUTPUTS_PRECISION))
-    organ_outputs_df.to_csv(os.path.join(OUTPUTS_DIRPATH, ORGAN_OUTPUTS_FILENAME), index=False, na_rep='NA', float_format='%.{}f'.format(OUTPUTS_PRECISION))
+    hiddenzones_outputs.to_csv(os.path.join(OUTPUTS_DIRPATH, HGZ_OUTPUTS_FILENAME), index=False, na_rep='NA', float_format='%.{}f'.format(OUTPUTS_PRECISION))
+    organs_outputs.to_csv(os.path.join(OUTPUTS_DIRPATH, ORGAN_OUTPUTS_FILENAME), index=False, na_rep='NA', float_format='%.{}f'.format(OUTPUTS_PRECISION))
+    roots_outputs.to_csv(os.path.join(OUTPUTS_DIRPATH, ROOT_OUTPUTS_FILENAME), index=False, na_rep='NA', float_format='%.{}f'.format(OUTPUTS_PRECISION))

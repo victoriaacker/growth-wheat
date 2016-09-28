@@ -42,8 +42,8 @@ setup(
     # metadata for upload to PyPI
     author = "C.Chambon, R.Barillot",
     author_email = "camille.chambon@grignon.inra.fr, romain.barillot@grignon.inra.fr",
-    description = "Mechanistic model of wheat growth",
-    long_description = "A mechanistic model for wheat that accounts for organ extension and growth according to the CN status",
+    description = "Model of leaf growth for wheat",
+    long_description = "A mechanistic model of leaf growth for wheat that accounts for the CN status",
     license = "", # TODO
     keywords = "", # TODO
     url = "https://sourcesup.renater.fr/projects/growth-wheat/",

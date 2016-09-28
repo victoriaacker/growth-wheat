@@ -6,7 +6,7 @@ from __future__ import division # use "//" to do integer division
     growthwheat.model
     ~~~~~~~~~~~~~
 
-    The module :mod:`growthwheat.model` defines the equations of the kinetic of leaf elongation according to CN status.
+    The module :mod:`growthwheat.model` defines the equations of the kinetic of leaf growth (mass flows) according to leaf elongation. Also includes root growth.
 
     :copyright: Copyright 2014-2015 INRA-ECOSYS, see AUTHORS.
     :license: TODO, see LICENSE for details.
@@ -26,194 +26,115 @@ from __future__ import division # use "//" to do integer division
 import math
 import parameters
 
-def calculate_hz_length(previous_hz_L, previous_sheath_visible_L, previous_sheath_final_hidden_L):
-    """ length of the hidden zone given by the previous sheaths.
-
-    :Parameters:
-        - `previous_hz_L` (:class:`float`) - Length of the previous hidden zone (m). Could be None is no previous hz found.
-        - `previous_sheath_visible_L` (:class:`float`) - Visible length of the previous sheath (m).
-        - `previous_sheath_final_hidden_L` (:class:`float`) - Final hidden length of the previous sheath (m).
-    :Returns:
-        Hidden zone length (m)
-    :Returns Type:
-        :class:`float`
-    """
-    if previous_hz_L:
-        hz_L = previous_hz_L + previous_sheath_visible_L
-    else:
-        hz_L = previous_sheath_final_hidden_L + previous_sheath_visible_L # here 'previous_sheath_visible_L' is also the final visible length of the previous sheath
-    return hz_L
-
-
-def calculate_deltaL_preE(sucrose, leaf_L, amino_acids, mstruct, delta_t):
-    """ delta of leaf length over delta_t as a function of sucrose and amino acids, from initiation to the emergence of the previous leaf.
-
-    :Parameters:
-        - `sucrose` (:class:`float`) - Amount of sucrose (µmol C)
-        - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `amino_acids` (:class:`float`) - Amount of amino acids (µmol N)
-        - `mstruct` (:class:`float`) - Structural mass (g)
-    :Returns:
-        delta delta_leaf_L (m)
-    :Returns Type:
-        :class:`float`
-    """
-    if sucrose > 0:
-        delta_leaf_L = leaf_L * ((sucrose / mstruct) / (parameters.Kc + (sucrose / mstruct))) * (((amino_acids/mstruct) **3) / (parameters.Kn**3 + (amino_acids / mstruct)**3)) * parameters.RERmax * delta_t
-    else:
-        delta_leaf_L = 0
-    return delta_leaf_L
-
-def calculate_deltaL_postE(leaf_L, leaf_Lmax, sucrose, delta_t):
-    """ delta of leaf length, from the emergence of the previous leaf to the end of growth (predefined growth kinetic depending on leaf state).
+def calculate_delta_mstruct_preE(leaf_L, delta_leaf_L):
+    """ Relation between leaf length and the delta of mstruct in the hidden growing zone.
+    Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1975) and expressed in g of dry mass.
+    Parameter RATIO_MSTRUCT_DM is then used to convert in g of structural dry mass.
 
     :Parameters:
         - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `leaf_Lmax` (:class:`float`) - Final leaf length (m)
-        - `sucrose` (:class:`float`) - Amount of sucrose (µmol C)
+        - `delta_leaf_L` (:class:`float`) - delta of leaf length (m)
     :Returns:
-        delta delta_leaf_L (m)
+        delta mstruct (g)
     :Returns Type:
         :class:`float`
     """
-    if sucrose > 0:
-        delta_leaf_L = parameters.K * leaf_L * max(((leaf_L / leaf_Lmax) - 1)**2, parameters.EPSILON**2)**(parameters.N) * delta_t
-    else:
-        delta_leaf_L = 0
-    return delta_leaf_L
+    return parameters.ALPHA * parameters.BETA * leaf_L**(parameters.BETA-1) * delta_leaf_L * parameters.RATIO_MSTRUCT_DM
 
-def calculate_leaf_Lmax(leaf_Lem_prev):
-    """ Final leaf length.
+def calculate_delta_mstruct_postE(SSW, previous_mstruct, area):
+    """ delta mstruct of emerged tissue (lamina and sheath). Function used when a model (e.g. ADEL-Wheat) has computed the plant geometry and thus updated organ area.
 
     :Parameters:
-        - `leaf_Lem_prev` (:class:`float`) - Leaf length at the emergence of the previous leaf (m)
+        - `SSW` (:class:`float`) - Structural Specific Weight (g m-2)
+        - `previous_mstruct` (:class:`float`) - mstruct at the previous time step i.e. not yet updated (g)
+        - `area` (:class:`float`) - Area at the current time step, as updated by the geometrical model (m2)
     :Returns:
-        Final leaf length (m)
+        delta mstruct (g)
     :Returns Type:
         :class:`float`
     """
-    return leaf_Lem_prev * parameters.Y0
+    updated_mstruct = SSW * area
+    delta_mstruct = updated_mstruct - previous_mstruct
+    return delta_mstruct
 
-def calculate_SL_ratio(phytomer_rank):
-    """ Sheath:Lamina final length ratio according to the rank. Parameters from Dornbush (2011).
+def calculate_export_sucrose(delta_mstruct, sucrose, hgz_mstruct):
+    """Export of sucrose from the hidden growing zone towards the emerged part of the leaf integrated over delta_t (µmol C sucrose).
 
     :Parameters:
-        - `phytomer_rank` (:class:`float`)
+        - `delta_mstruct` (:class:`float`) - Delta of structural dry mass of the emerged part of the leaf (g)
+        - `sucrose` (:class:`float`) - Sucrose amount in the hidden growing zone (µmol C)
+        - `hgz_mstruct` (:class:`float`) - Structural mass of the hidden growing zone (g)
+
     :Returns:
-        Sheath:Lamina ratio (dimensionless)
+        Sucrose export (µmol C)
     :Returns Type:
         :class:`float`
     """
-    return -0.0021 * phytomer_rank**3 + 0.037 * phytomer_rank**2 - 0.1527 * phytomer_rank + 0.4962
+    return delta_mstruct * max(0, (sucrose / hgz_mstruct))
 
-def calculate_lamina_Lmax(leaf_Lmax, sheath_lamina_ratio):
-    """ Final lamina length.
+def calculate_export_amino_acids(delta_mstruct, amino_acids, hgz_mstruct):
+    """Export of amino acids from the hidden growing zone towards the emerged part of the leaf integrated over delta_t (µmol N amino acids).
 
     :Parameters:
-        - `leaf_Lmax` (:class:`float`) - Final leaf length (m)
-        - `sheath_lamina_ratio` (:class:`float`) - Sheath:Lamina ratio (dimensionless)
+        - `delta_mstruct` (:class:`float`) - Delta of structural dry mass of the emerged part of the leaf (g)
+        - `amino_acids` (:class:`float`) - Amino acids amount in the hidden growing zone (µmol N)
+        - `hgz_mstruct` (:class:`float`) - Structural mass of the hidden growing zone (g)
 
     :Returns:
-        final lamina length (m)
+        amino acids export (µmol N)
     :Returns Type:
         :class:`float`
     """
-    return leaf_Lmax / (1 + sheath_lamina_ratio)
+    return delta_mstruct * max(0, (amino_acids / hgz_mstruct))
 
-def calculate_sheath_Lmax(leaf_Lmax, lamina_Lmax):
-    """ Final sheath length.
+def calculate_s_mstruct_sucrose(delta_hgz_mstruct, delta_lamina_mstruct, delta_sheath_mstruct):
+    """Consumption of sucrose for the calculated mstruct growth (µmol C consumed by mstruct growth)
 
     :Parameters:
-        - `leaf_Lmax` (:class:`float`) - Final leaf length (m)
-        - `lamina_Lmax` (:class:`float`) - Final lamina length (m)
-
+        - `delta_hgz_mstruct` (:class:`float`) - Hidden growing zone growth of mstruct (g)
+        - `delta_lamina_mstruct` (:class:`float`) - Lamina growth of mstruct (g)
+        - `delta_sheath_mstruct` (:class:`float`) - Sheath growth of mstruct (g)
     :Returns:
-        final sheath length (m)
+        Sucrose consumption (µmol C)
     :Returns Type:
         :class:`float`
     """
-    return leaf_Lmax - lamina_Lmax
+    return (delta_hgz_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_CN_MSTRUCT * parameters.RATIO_SUCROSE_MSTRUCT
 
-def calculate_leaf_Wmax(lamina_Lmax, fructan, mstruct):
-    """ Maximal leaf width.
-    0.0575 et 0.12 issu graph Dornbush
+def calculate_s_mstruct_amino_acids(delta_hgz_mstruct, delta_lamina_mstruct, delta_sheath_mstruct):
+    """Consumption of amino acids for the calculated mstruct growth (µmol N consumed by mstruct growth)
 
     :Parameters:
-        - `lamina_Lmax` (:class:`float`) - Maximal lamina length (m)
-        - `fructan` (:class:`float`) - Fructan in the hidden zone at the time of the previous leaf emergence (µmol C).
-        - `mstruct` (:class:`float`) - Mstruct of the hidden zone at the time of the previous leaf emergence (g).
+        - `delta_hgz_mstruct` (:class:`float`) - Hidden growing zone growth (g)
+        - `delta_lamina_mstruct` (:class:`float`) - Lamina growth (g)
+        - `delta_sheath_mstruct` (:class:`float`) - Sheath growth(g)
     :Returns:
-        maximal leaf width (m)
+        Amino acid consumption (µmol N)
     :Returns Type:
         :class:`float`
     """
-    return (0.0575 * lamina_Lmax - 0.00012) * (parameters.EC_wmax * 2 * parameters.Ksslw/(parameters.Ksslw + (fructan / mstruct)) + (1-parameters.EC_wmax)) #TODO: a remplacer
+    return (delta_hgz_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_CN_MSTRUCT * parameters.RATIO_AMINO_ACIDS_MSTRUCT
 
-def calculate_SSLW(fructan, mstruct):
-    """ Structural Specific Lamina Weight.
+## Roots
+def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_t):
+    """Root structural dry mass growth integrated over delta_t
 
-    :Parameters:
-        - `fructan` (:class:`float`) - Fructan in the hidden zone at the time of the previous leaf emergence (µmol C).
-        - `mstruct` (:class:`float`) - Mstruct of the hidden zone at the time of the previous leaf emergence (g).
-    :Returns:
-        Structural Specific Leaf Weight (g m-2)
+    : Parameters:
+        - `sucrose` (:class:`float`) - Amount of sucrose in roots (µmol C)
+        - `amino_acids` (:class:`float`) - Amount of amino acids in roots (µmol N)
+        - `mstruct` (:class:`float`) - Root structural mass (g)
+
+    : Returns:
+        mstruct_C_growth (µmol C), mstruct_growth (g), Nstruct_growth (g), Nstruct_N_growth (µmol N)
+
     :Returns Type:
         :class:`float`
     """
-    conc_fructan = fructan / mstruct
-    return parameters.min_SSLW + (parameters.max_SSLW - parameters.min_SSLW) * conc_fructan/ (conc_fructan + parameters.Ksslw)
+    conc_sucrose = max(0, sucrose/mstruct)
 
-def calculate_SSSW(SSLW):
-    """ Structural Specific Sheath Weight.
+    mstruct_C_growth = (conc_sucrose * parameters.VMAX_ROOTS_GROWTH) / (conc_sucrose + parameters.K_ROOTS_GROWTH) * delta_t * mstruct     #: root growth in C (µmol of C)
+    mstruct_growth = (mstruct_C_growth*1E-6 * parameters.C_MOLAR_MASS) / parameters.RATIO_C_MSTRUCT_ROOTS                                 #: root growth (g of structural dry mass)
+    Nstruct_growth = mstruct_growth * parameters.RATIO_N_MSTRUCT_ROOTS_                                                                   #: root growth in N (g of structural dry mass)
+    Nstruct_N_growth = min(amino_acids, (Nstruct_growth / parameters.N_MOLAR_MASS)*1E6)                                                   #: root growth in nitrogen (µmol N)
 
-    :Parameters:
-        - `SSLW` (:class:`float`) - Structural Specific Leaf Weight (g m-2).
-    :Returns:
-        Structural Specific Sheath Weight (g m-2)
-    :Returns Type:
-        :class:`float`
-    """
-    return SSLW * parameters.ratio_SSSW_SSLW
-
-def calculate_leaf_emergence(leaf_L, hz_L):
-    """Calculate if a given leaf has emerged from the hidden zone
-
-    :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `hz_L` (:class:`float`) - Length of the hidden zone (m)
-    :Returns:
-        Specifies if the leaf has emerged (True) or not (False)
-    :Returns Type:
-        :class:`bool`
-    """
-    return leaf_L > hz_L
-
-def calculate_lamina_L(leaf_L, hz_L):
-    """ Emerged lamina length given by the difference between leaf length and hidden zone length.
-
-    :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `hz_L` (:class:`float`) - Length of the hidden zone (m)
-    :Returns:
-        lamina length (m)
-    :Returns Type:
-        :class:`float`
-    """
-    lamina_L = leaf_L - hz_L
-    if lamina_L <=0:
-        raise Warning('the leaf is shorther than the hz')
-    return max(0, lamina_L)
-
-def calculate_sheath_L(leaf_L, hz_L, lamina_L):
-    """ Emerged sheath length. Assumes that leaf_L = hz_L + sheath_L + lamina_L
-
-    :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `hz_L` (:class:`float`) - Length of the hidden zone (m)
-        - `lamina_L` (:class:`float`) - Lamina length (m)
-    :Returns:
-        sheath length (m)
-    :Returns Type:
-        :class:`float`
-    """
-    return leaf_L - hz_L - lamina_L
+    return mstruct_C_growth, mstruct_growth, Nstruct_growth, Nstruct_N_growth
