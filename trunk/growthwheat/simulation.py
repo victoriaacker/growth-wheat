@@ -38,9 +38,9 @@ ORGAN_INPUTS = ['is_growing', 'mstruct', 'green_area', 'sucrose', 'amino_acids']
 ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
 
 #: the outputs computed by GrowthWheat
-HIDDENZONE_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct']
+HIDDENZONE_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Respi_growth', 'sucrose_consumption_mstruct']
 ORGAN_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct']
-ROOT_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
+ROOT_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct', 'Respi_growth']
 
 #: the inputs and outputs of GrowthWheat.
 HIDDENZONE_INPUTS_OUTPUTS = sorted(set(HIDDENZONE_INPUTS + HIDDENZONE_OUTPUTS))
@@ -143,7 +143,7 @@ class Simulation(object):
                     curr_organ_inputs = all_organs_inputs[sheath_id]
                     curr_organ_outputs = all_organs_outputs[sheath_id]
                     ## Delta mstruct of the emerged sheath
-                    delta_sheath_mstruct = model.calculate_delta_mstruct_postE(hiddenzone_inputs['SSSW'], curr_organ_inputs['mstruct'], curr_organ_inputs['area'])
+                    delta_sheath_mstruct = model.calculate_delta_mstruct_postE(hiddenzone_inputs['SSSW'], curr_organ_inputs['mstruct'], curr_organ_inputs['green_area'])
                     ## Export of sucrose from hiddenzone towards emerged sheath
                     export_sucrose = model.calculate_export_sucrose(delta_sheath_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
                     ## Export of amino acids from hiddenzone towards emerged sheath
@@ -156,11 +156,11 @@ class Simulation(object):
                     self.outputs['organs'][sheath_id] = curr_organ_outputs
 
             # Update of leaf outputs
-            sucrose_consumption_mstruct = model.calculate_s_mstruct_sucrose(delta_mstruct, delta_lamina_mstruct, delta_sheath_mstruct) #: Consumption of sucrose due to mstruct growth
+            curr_hiddenzone_outputs['sucrose_consumption_mstruct'] = model.calculate_s_mstruct_sucrose(delta_mstruct, delta_lamina_mstruct, delta_sheath_mstruct) #: Consumption of sucrose due to mstruct growth
             AA_consumption_mstruct = model.calculate_s_mstruct_amino_acids(delta_mstruct, delta_lamina_mstruct, delta_sheath_mstruct)  #: Consumption of amino acids due to mstruct growth
-            Respi_growth = RespirationModel.R_growth(sucrose_consumption_mstruct)                                                      #: Respiration growth
+            curr_hiddenzone_outputs['Respi_growth'] = RespirationModel.R_growth(curr_hiddenzone_outputs['sucrose_consumption_mstruct'])                                                      #: Respiration growth
             curr_hiddenzone_outputs['mstruct'] += delta_mstruct
-            curr_hiddenzone_outputs['sucrose'] -= (sucrose_consumption_mstruct + Respi_growth + export_sucrose)
+            curr_hiddenzone_outputs['sucrose'] -= (curr_hiddenzone_outputs['sucrose_consumption_mstruct'] + curr_hiddenzone_outputs['Respi_growth'] + export_sucrose)
             curr_hiddenzone_outputs['amino_acids'] -= (AA_consumption_mstruct + export_amino_acids)
             self.outputs['hiddenzone'][hiddenzone_id] = curr_hiddenzone_outputs
 
@@ -171,10 +171,10 @@ class Simulation(object):
             # Growth
             mstruct_C_growth, mstruct_growth, Nstruct_growth, Nstruct_N_growth = model.calculate_roots_mstruct_growth(root_inputs['sucrose'], root_inputs['amino_acids'], root_inputs['mstruct'], self.delta_t)
             # Respiration growth
-            Respi_growth = RespirationModel.R_growth(mstruct_C_growth)
+            curr_root_outputs['Respi_growth'] = RespirationModel.R_growth(mstruct_C_growth)
             # Update of root outputs
             curr_root_outputs['mstruct'] += mstruct_growth
-            curr_root_outputs['sucrose'] -= (mstruct_C_growth)
+            curr_root_outputs['sucrose'] -= (mstruct_C_growth + curr_root_outputs['Respi_growth'])
             curr_root_outputs['Nstruct'] += Nstruct_growth
             curr_root_outputs['amino_acids'] -= (Nstruct_N_growth)
             self.outputs['roots'][root_id] = curr_root_outputs
