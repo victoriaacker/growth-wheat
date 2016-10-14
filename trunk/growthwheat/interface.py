@@ -30,8 +30,8 @@ def run(g, dt, copy=True):
     :Returns Type:
         :class:`openalea.mtg.mtg.MTG`
 
-    .. seealso:: see :func:`adelgrowthwheat.adelgeom.interface.add_metamer` for the type signature of the function. #TODO: update
     """
+
     # create a simulation object
     simulation_ = simulation.Simulation(delta_t=dt)
     # convert the MTG to simulation inputs format

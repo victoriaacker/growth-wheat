@@ -1,8 +1,8 @@
-plant,axis,metamer,organ,sucrose,amino_acids,mstruct
-1,MS,1,blade,16.000000,0.400000,0.018000
-1,MS,1,sheath,8.000000,0.200000,0.010000
-1,MS,2,blade,10.000000,0.500000,0.020000
-1,MS,2,sheath,20.000000,0.250000,0.012000
-1,MS,3,blade,24.000000,0.600000,0.022000
-1,MS,3,sheath,12.000000,0.300000,0.014000
-1,MS,4,blade,0.000000,0.000000,0.000000
+plant,axis,metamer,organ,sucrose,amino_acids,mstruct,Nstruct
+1,MS,1,blade,16.0,0.4,0.018,0.00054
+1,MS,1,sheath,8.0,0.2,0.01,0.0003
+1,MS,2,blade,10.0,0.5,0.02,0.0006
+1,MS,2,sheath,20.0,0.25,0.012,0.00036
+1,MS,3,blade,24.0,0.6,0.022,0.00066
+1,MS,3,sheath,12.0,0.3,0.014,0.00042
+1,MS,4,blade,0.0,0.0,0.0,0.0

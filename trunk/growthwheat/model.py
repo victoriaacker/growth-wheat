@@ -26,8 +26,8 @@ from __future__ import division # use "//" to do integer division
 import math
 import parameters
 
-def calculate_delta_mstruct_preE(leaf_L, delta_leaf_L):
-    """ Relation between leaf length and the delta of mstruct in the hidden growing zone.
+def calculate_delta_hiddenzone_mstruct(leaf_L, delta_leaf_L):
+    """ Relation between length and mstruct for the leaf segment located in the hidden zone.
     Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1975) and expressed in g of dry mass.
     Parameter RATIO_MSTRUCT_DM is then used to convert in g of structural dry mass.
 
@@ -41,7 +41,7 @@ def calculate_delta_mstruct_preE(leaf_L, delta_leaf_L):
     """
     return parameters.ALPHA * parameters.BETA * leaf_L**(parameters.BETA-1) * delta_leaf_L * parameters.RATIO_MSTRUCT_DM
 
-def calculate_delta_mstruct_postE(SSW, previous_mstruct, area):
+def calculate_delta_emerged_tissue_mstruct(SSW, previous_mstruct, area):
     """ delta mstruct of emerged tissue (lamina and sheath). Function used when a model (e.g. ADEL-Wheat) has computed the plant geometry and thus updated organ area.
 
     :Parameters:
@@ -57,63 +57,81 @@ def calculate_delta_mstruct_postE(SSW, previous_mstruct, area):
     delta_mstruct = updated_mstruct - previous_mstruct
     return delta_mstruct
 
-def calculate_export_sucrose(delta_mstruct, sucrose, hgz_mstruct):
-    """Export of sucrose from the hidden growing zone towards the emerged part of the leaf integrated over delta_t (µmol C sucrose).
+def calculate_delta_Nstruct(delta_mstruct):
+    """ delta Nstruct of hidden zone and emerged tissue (lamina and sheath).
+
+    :Parameters:
+        - `delta_mstruct` (:class:`float`) - delta of mstruct (g)
+    :Returns:
+        delta Nstruct (g)
+    :Returns Type:
+        :class:`float`
+    """
+    return delta_mstruct * parameters.RATIO_AMINO_ACIDS_MSTRUCT
+
+def calculate_export_sucrose(delta_mstruct, sucrose, hiddenzone_mstruct):
+    """Export of sucrose from the hidden zone towards the emerged part of the leaf integrated over delta_t (µmol C sucrose).
 
     :Parameters:
         - `delta_mstruct` (:class:`float`) - Delta of structural dry mass of the emerged part of the leaf (g)
-        - `sucrose` (:class:`float`) - Sucrose amount in the hidden growing zone (µmol C)
-        - `hgz_mstruct` (:class:`float`) - Structural mass of the hidden growing zone (g)
+        - `sucrose` (:class:`float`) - Sucrose amount in the hidden zone (µmol C)
+        - `hiddenzone_mstruct` (:class:`float`) - Structural mass of the hidden zone (g)
 
     :Returns:
         Sucrose export (µmol C)
     :Returns Type:
         :class:`float`
     """
-    return delta_mstruct * max(0, (sucrose / hgz_mstruct))
+    return delta_mstruct * max(0, (sucrose / hiddenzone_mstruct))
 
-def calculate_export_amino_acids(delta_mstruct, amino_acids, hgz_mstruct):
-    """Export of amino acids from the hidden growing zone towards the emerged part of the leaf integrated over delta_t (µmol N amino acids).
+def calculate_export_amino_acids(delta_mstruct, amino_acids, hiddenzone_mstruct):
+    """Export of amino acids from the hidden zone towards the emerged part of the leaf integrated over delta_t (µmol N amino acids).
 
     :Parameters:
         - `delta_mstruct` (:class:`float`) - Delta of structural dry mass of the emerged part of the leaf (g)
-        - `amino_acids` (:class:`float`) - Amino acids amount in the hidden growing zone (µmol N)
-        - `hgz_mstruct` (:class:`float`) - Structural mass of the hidden growing zone (g)
+        - `amino_acids` (:class:`float`) - Amino acids amount in the hidden zone (µmol N)
+        - `hiddenzone_mstruct` (:class:`float`) - Structural mass of the hidden zone (g)
 
     :Returns:
         amino acids export (µmol N)
     :Returns Type:
         :class:`float`
     """
-    return delta_mstruct * max(0, (amino_acids / hgz_mstruct))
+    return delta_mstruct * max(0, (amino_acids / hiddenzone_mstruct))
 
-def calculate_s_mstruct_sucrose(delta_hgz_mstruct, delta_lamina_mstruct, delta_sheath_mstruct):
-    """Consumption of sucrose for the calculated mstruct growth (µmol C consumed by mstruct growth)
-
-    :Parameters:
-        - `delta_hgz_mstruct` (:class:`float`) - Hidden growing zone growth of mstruct (g)
-        - `delta_lamina_mstruct` (:class:`float`) - Lamina growth of mstruct (g)
-        - `delta_sheath_mstruct` (:class:`float`) - Sheath growth of mstruct (g)
-    :Returns:
-        Sucrose consumption (µmol C)
-    :Returns Type:
-        :class:`float`
-    """
-    return (delta_hgz_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_CN_MSTRUCT * parameters.RATIO_SUCROSE_MSTRUCT
-
-def calculate_s_mstruct_amino_acids(delta_hgz_mstruct, delta_lamina_mstruct, delta_sheath_mstruct):
+def calculate_s_Nstruct_amino_acids(delta_hiddenzone_Nstruct, delta_lamina_Nstruct, delta_sheath_Nstruct):
     """Consumption of amino acids for the calculated mstruct growth (µmol N consumed by mstruct growth)
 
     :Parameters:
-        - `delta_hgz_mstruct` (:class:`float`) - Hidden growing zone growth (g)
-        - `delta_lamina_mstruct` (:class:`float`) - Lamina growth (g)
-        - `delta_sheath_mstruct` (:class:`float`) - Sheath growth(g)
+        - `delta_hiddenzone_Nstruct` (:class:`float`) - Nstruct growth of the hidden zone (g)
+        - `delta_lamina_Nstruct` (:class:`float`) - Nstruct growth of the lamina (g)
+        - `delta_sheath_Nstruct` (:class:`float`) - Nstruct growth of the sheath (g)
     :Returns:
         Amino acid consumption (µmol N)
     :Returns Type:
         :class:`float`
     """
-    return (delta_hgz_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_CN_MSTRUCT * parameters.RATIO_AMINO_ACIDS_MSTRUCT
+    return (delta_hiddenzone_Nstruct + delta_lamina_Nstruct + delta_sheath_Nstruct) / parameters.N_MOLAR_MASS * 1E6
+
+def calculate_s_mstruct_sucrose(delta_hiddenzone_mstruct, delta_lamina_mstruct, delta_sheath_mstruct, s_Nstruct_amino_acids_N):
+    """Consumption of sucrose for the calculated mstruct growth (µmol C consumed by mstruct growth)
+
+    :Parameters:
+        - `delta_hiddenzone_mstruct` (:class:`float`) - mstruct growth of the hidden zone (g)
+        - `delta_lamina_mstruct` (:class:`float`) - mstruct growth of the lamina (g)
+        - `delta_sheath_mstruct` (:class:`float`) - mstruct growth of the sheath (g)
+        - `s_Nstruct_amino_acids_N` (:class:`float`) - Total amino acid consumption (µmol N) due to Nstruct (µmol N)
+    :Returns:
+        Sucrose consumption (µmol C)
+    :Returns Type:
+        :class:`float`
+    """
+    s_Nstruct_amino_acids = s_Nstruct_amino_acids_N / parameters.AMINO_ACIDS_N_RATIO   #: µmol of AA
+    s_mstruct_amino_acids_C = s_Nstruct_amino_acids * parameters.AMINO_ACIDS_C_RATIO   #: µmol of C coming from AA
+    s_mstruct_C = (delta_hiddenzone_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_SUCROSE_MSTRUCT / parameters.C_MOLAR_MASS * 1E6 #: Total C used for mstruct growth (µmol C)
+    s_mstruct_sucrose_C = s_mstruct_C - s_mstruct_amino_acids_C                        #: µol of coming from sucrose
+    return s_mstruct_sucrose_C
+
 
 ## Roots
 def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_t):
