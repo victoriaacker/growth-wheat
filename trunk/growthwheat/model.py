@@ -23,7 +23,6 @@ from __future__ import division # use "//" to do integer division
         $Id$
 """
 
-import math
 import parameters
 
 def calculate_delta_hiddenzone_mstruct(leaf_L, delta_leaf_L):

@@ -23,11 +23,7 @@ from __future__ import division # use "//" to do integer division
         $Id$
 """
 
-import numpy as np
-import pandas as pd
-
 import model
-import logging
 import copy
 
 from respiwheat.model import RespirationModel

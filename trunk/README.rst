@@ -1,6 +1,6 @@
-===================
+=======================
 README for Growth-Wheat
-===================
+=======================
 
 This is Growth-Wheat model, a mechanistic model of wheat growth.
 
@@ -10,10 +10,12 @@ Prerequisites
 
 * To run the model:
     * Python >= 2.7, http://www.python.org/
-    * NumPy >= 1.7.2, http://www.numpy.org/
-    * Pandas >= 0.14.0, http://pandas.pydata.org/
+    * Pandas >= 0.18.0, http://pandas.pydata.org/
+    * Respi-Wheat, https://sourcesup.renater.fr/projects/respi-wheat/ (or send an email to respi-wheat-request@groupes.renater.fr)
 * To build the documentation: Sphinx >= 1.1.3, http://sphinx-doc.org/
-* To run the tests: Nose >= 1.3.0, http://nose.readthedocs.org/
+* To run the tests: 
+	* Nose >= 1.3.0, http://nose.readthedocs.org/
+	* NumPy >= 1.11.0, http://www.numpy.org/
 * To get code coverage testing: Coverage >= 3.6b3, http://nedbatchelder.com/code/coverage/
 
 
