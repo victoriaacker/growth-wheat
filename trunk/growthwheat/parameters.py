@@ -39,3 +39,39 @@ VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry mat
 K_ROOTS_GROWTH = 1250                 #: Affinity coefficient of root structural dry matter growth (µmol C g-1 MS)
 RATIO_C_MSTRUCT_ROOTS = 0.384         #: Mean contribution of carbon to root structural dry mass (g C g-1 Mstruct)
 RATIO_N_MSTRUCT_ROOTS_ = 0.02         #: Mean contribution of nitrogen to root structural dry mass (g N g-1 Mstruct)
+
+
+
+class HiddenZoneInit:
+    """
+    Initial values for hidden zones
+    """
+
+class HiddenZoneInit:
+    """
+    Initial values for hidden zones
+    """
+
+    leaf_L = 4E-08
+    delta_leaf_L = 0
+    hiddenzone_L = 0
+    delta_hiddenzone_L = 0
+    SSLW = 0
+    SSSW = 0
+    leaf_is_emerged = False
+    sucrose = 1E-3
+    amino_acids = 1E-3
+    mstruct = 2.65E-08
+    Nstruct = 8.53E-10
+
+class OrganInit:
+    """
+    Initial values for organs
+    """
+
+    is_growing = True
+    mstruct = 0
+    green_area = 0
+    sucrose = 0
+    amino_acids = 0
+    Nstruct = 0

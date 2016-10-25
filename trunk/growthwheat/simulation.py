@@ -36,11 +36,12 @@ ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
 #: the outputs computed by GrowthWheat
 HIDDENZONE_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct', 'Respi_growth', 'sucrose_consumption_mstruct', 'AA_consumption_mstruct']
 ORGAN_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
-ROOT_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct', 'Respi_growth']
+ROOT_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct', 'Respi_growth', 'mstruct_growth']
 
 #: the inputs and outputs of GrowthWheat.
 HIDDENZONE_INPUTS_OUTPUTS = sorted(set(HIDDENZONE_INPUTS + HIDDENZONE_OUTPUTS))
 ORGAN_INPUTS_OUTPUTS = sorted(set(ORGAN_INPUTS + ORGAN_OUTPUTS))
+ROOT_INPUTS_OUTPUTS = sorted(set(ROOT_INPUTS + ROOT_OUTPUTS))
 
 
 class SimulationError(Exception): pass
@@ -190,4 +191,5 @@ class Simulation(object):
             curr_root_outputs['sucrose'] -= (mstruct_C_growth + curr_root_outputs['Respi_growth'])
             curr_root_outputs['Nstruct'] += Nstruct_growth
             curr_root_outputs['amino_acids'] -= (Nstruct_N_growth)
+            curr_root_outputs['mstruct_growth'] = mstruct_growth
             self.outputs['roots'][root_id] = curr_root_outputs

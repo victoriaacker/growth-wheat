@@ -1,2 +1,2 @@
-plant,axis,sucrose,amino_acids,mstruct,Nstruct,Respi_growth
-1,MS,7.11057692308,7.48609203297,0.150009735577,0.00450019471154,0.0778846153846
+plant,axis,organ,sucrose,amino_acids,mstruct,Nstruct,Respi_growth,mstruct_growth
+1,MS,roots,7.11057692308,7.48609203297,0.150009735577,0.00450019471154,0.0778846153846,9.73557692308e-06

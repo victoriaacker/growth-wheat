@@ -31,7 +31,7 @@ import simulation
 #: the columns which define the topology in the input/output dataframe
 HIDDENZONE_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer']
 ORGAN_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ'] # visible part of organs
-ROOT_TOPOLOGY_COLUMNS = ['plant', 'axis']
+ROOT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'organ']
 
 def from_dataframes(hiddenzone_inputs, organ_inputs, root_inputs):
     """
