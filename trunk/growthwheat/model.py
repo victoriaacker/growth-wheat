@@ -40,8 +40,8 @@ def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L):
     """
     return parameters.ALPHA * parameters.BETA * leaf_L**(parameters.BETA-1) * delta_leaf_L * parameters.RATIO_MSTRUCT_DM
 
-def calculate_delta_internode_mstruct(internode_L, delta_internode_L):
-    """ Relation between length and mstruct for the internode (located in the hidden zone).
+def calculate_delta_internode_enclosed_mstruct(internode_L, delta_internode_L):
+    """ Relation between length and mstruct for the internode segment located in the hidden zone.
     Same relationship than for enclosed leaf.
     Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1975) and expressed in g of dry mass.
     Parameter RATIO_MSTRUCT_DM is then used to convert in g of structural dry mass.
