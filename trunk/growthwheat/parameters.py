@@ -42,48 +42,36 @@ RATIO_N_MSTRUCT_ROOTS_ = 0.02         #: Mean contribution of nitrogen to root s
 
 
 
+class HiddenZoneInit:
+    """
+    Initial values for hidden zones
+    """
 
 class HiddenZoneInit:
     """
     Initial values for hidden zones
     """
-    def __init__(self):
-        self.leaf_is_growing = True
-        self.internode_is_growing = False
-        self.internode_is_mature = False
-        self.leaf_dist_to_emerge = 4E-08
-        self.delta_leaf_dist_to_emerge = 0
-        self.internode_dist_to_emerge = 0
-        self.delta_internode_dist_to_emerge = 0
-        self.leaf_L = 4E-08
-        self.delta_leaf_L = 0
-        self.internode_L = 0
-        self.delta_internode_L = 0
-        self.leaf_Lmax = None # no calculation before emergence Ln-1
-        self.lamina_Lmax = None # no calculation before emergence Ln-1
-        self.sheath_Lmax = None # no calculation before emergence Ln-1
-        self.leaf_Wmax = None # no calculation before emergence Ln-1
-        self.SSLW = None # no calculation before emergence Ln-1
-        self.SSSW = None # no calculation before emergence Ln-1
-        self.leaf_is_emerged = False
-        self.sucrose = 1E-3
-        self.amino_acids = 1E-3
-        self.fructan = 0
-        self.leaf_enclosed_mstruct = 2.65E-08
-        self.internode_mstruct = 0
-        self.mstruct = self.leaf_enclosed_mstruct + self.internode_mstruct
-        self.leaf_enclosed_Nstruct = self.leaf_enclosed_mstruct * 0.0322 # parameter value in growth wheat
-        self.internode_Nstruct = self.internode_mstruct * 0.0322 # parameter value in growth wheat
-        self.proteins = 0
+
+    leaf_L = 4E-08
+    delta_leaf_L = 0
+    hiddenzone_L = 0
+    delta_hiddenzone_L = 0
+    SSLW = 0
+    SSSW = 0
+    leaf_is_emerged = False
+    sucrose = 1E-3
+    amino_acids = 1E-3
+    mstruct = 2.65E-08
+    Nstruct = 8.53E-10
 
 class OrganInit:
     """
     Initial values for organs
     """
-    def __init__(self):
-        self.is_growing = True
-        self.mstruct = 0
-        self.green_area = 0
-        self.sucrose = 0
-        self.amino_acids = 0
-        self.Nstruct = 0
+
+    is_growing = True
+    mstruct = 0
+    green_area = 0
+    sucrose = 0
+    amino_acids = 0
+    Nstruct = 0
