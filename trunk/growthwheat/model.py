@@ -58,7 +58,7 @@ def calculate_delta_internode_enclosed_mstruct(internode_L, delta_internode_L):
     return parameters.ALPHA * parameters.BETA * internode_L**(parameters.BETA-1) * delta_internode_L * parameters.RATIO_MSTRUCT_DM
 
 def calculate_delta_emerged_tissue_mstruct(SSW, previous_mstruct, area):
-    """ delta mstruct of emerged tissue (lamina and sheath). Function used when a model (e.g. ADEL-Wheat) has computed the plant geometry and thus updated organ area.
+    """ delta mstruct of emerged tissue (lamina and sheath). Function used when a model (e.g. ADEL-Wheat) has computed the plant geometry and thus updated element area.
 
     :Parameters:
         - `SSW` (:class:`float`) - Structural Specific Weight (g m-2)
@@ -146,6 +146,7 @@ def calculate_s_mstruct_sucrose(delta_hiddenzone_mstruct, delta_lamina_mstruct, 
     s_mstruct_amino_acids_C = s_Nstruct_amino_acids * parameters.AMINO_ACIDS_C_RATIO   #: µmol of C coming from AA
     s_mstruct_C = (delta_hiddenzone_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_SUCROSE_MSTRUCT / parameters.C_MOLAR_MASS * 1E6 #: Total C used for mstruct growth (µmol C)
     s_mstruct_sucrose_C = s_mstruct_C - s_mstruct_amino_acids_C                        #: µol of coming from sucrose
+
     return s_mstruct_sucrose_C
 
 

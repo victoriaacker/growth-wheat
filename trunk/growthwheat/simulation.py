@@ -23,24 +23,24 @@ from __future__ import division # use "//" to do integer division
         $Id$
 """
 
-import model
+import model, parameters
 import copy
 
 from respiwheat.model import RespirationModel
 
 #: the inputs needed by GrowthWheat
-HIDDENZONE_INPUTS = ['leaf_is_growing','internode_is_growing','leaf_L', 'delta_leaf_L', 'internode_L','delta_internode_L', 'leaf_dist_to_emerge', 'delta_leaf_dist_to_emerge','internode_dist_to_emerge','delta_internode_dist_to_emerge', 'SSLW', 'SSSW', 'leaf_is_emerged','SSINW','internode_is_visible', 'sucrose', 'amino_acids', 'fructan','proteins','leaf_enclosed_mstruct','leaf_enclosed_Nstruct','internode_mstruct', 'internode_Nstruct','mstruct']
-ORGAN_INPUTS = ['is_growing', 'mstruct', 'green_area', 'sucrose', 'amino_acids', 'fructan','proteins','Nstruct']
+HIDDENZONE_INPUTS = ['leaf_is_growing','internode_is_growing','leaf_L', 'delta_leaf_L', 'internode_L','delta_internode_L', 'leaf_dist_to_emerge', 'delta_leaf_dist_to_emerge','internode_dist_to_emerge','delta_internode_dist_to_emerge', 'SSLW', 'SSSW', 'leaf_is_emerged','SSINW','internode_is_visible', 'sucrose', 'amino_acids', 'fructan','proteins','leaf_enclosed_mstruct','leaf_enclosed_Nstruct','internode_enclosed_mstruct', 'internode_enclosed_Nstruct','mstruct']
+ELEMENT_INPUTS = ['is_growing', 'mstruct', 'green_area', 'sucrose', 'amino_acids', 'fructan','proteins','Nstruct']
 ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
 
 #: the outputs computed by GrowthWheat
-HIDDENZONE_OUTPUTS = ['sucrose', 'amino_acids','fructan','proteins', 'leaf_enclosed_mstruct', 'leaf_enclosed_Nstruct', 'internode_mstruct', 'internode_Nstruct','mstruct', 'Respi_growth', 'sucrose_consumption_mstruct', 'AA_consumption_mstruct']
-ORGAN_OUTPUTS = ['sucrose', 'amino_acids','fructan','proteins', 'mstruct', 'Nstruct']
+HIDDENZONE_OUTPUTS = ['sucrose', 'amino_acids','fructan','proteins', 'leaf_enclosed_mstruct', 'leaf_enclosed_Nstruct', 'internode_enclosed_mstruct', 'internode_enclosed_Nstruct','mstruct', 'Respi_growth', 'sucrose_consumption_mstruct', 'AA_consumption_mstruct']
+ELEMENT_OUTPUTS = ['sucrose', 'amino_acids','fructan','proteins', 'mstruct', 'Nstruct','green_area']
 ROOT_OUTPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct', 'Respi_growth', 'rate_mstruct_growth']
 
 #: the inputs and outputs of GrowthWheat.
 HIDDENZONE_INPUTS_OUTPUTS = sorted(set(HIDDENZONE_INPUTS + HIDDENZONE_OUTPUTS))
-ORGAN_INPUTS_OUTPUTS = sorted(set(ORGAN_INPUTS + ORGAN_OUTPUTS))
+ELEMENT_INPUTS_OUTPUTS = sorted(set(ELEMENT_INPUTS + ELEMENT_OUTPUTS))
 ROOT_INPUTS_OUTPUTS = sorted(set(ROOT_INPUTS + ROOT_OUTPUTS))
 
 
@@ -58,7 +58,7 @@ class Simulation(object):
         #:
         #: `inputs` is a dictionary of dictionaries:
         #:     {'hiddenzone': {(plant_index, axis_label, metamer_index): {hiddenzone_input_name: hiddenzone_input_value, ...}, ...},
-        #:      'organs': {(plant_index, axis_label, metamer_index, organ_label): {organ_input_name: organ_input_value, ...}, ...},
+        #:      'elements': {(plant_index, axis_label, metamer_index, organ_label, element_label): {organ_input_name: organ_input_value, ...}, ...},
         #:      'roots': {(plant_index, axis_label): {root_input_name: root_input_value, ...}, ...}}
         #: See :TODO?
         #: for more information about the inputs.
@@ -68,7 +68,7 @@ class Simulation(object):
         #:
         #: `outputs` is a dictionary of dictionaries:
         #:     {'hiddenzone': {(plant_index, axis_label, metamer_index): {hiddenzone_input_name: hiddenzone_input_value, ...}, ...},
-        #:      'organs': {(plant_index, axis_label, metamer_index, organ_label): {organ_input_name: organ_input_value, ...}, ...}
+        #:      'elements': {(plant_index, axis_label, metamer_index, organ_label, element_label): {organ_input_name: organ_input_value, ...}, ...}
         #:      'roots': {(plant_index, axis_label): {root_input_name: root_input_value, ...}, ...}}
         #: See :TODO?
         #: for more information about the inputs.
@@ -92,22 +92,25 @@ class Simulation(object):
 
     def run(self):
         # Copy the inputs into the output dict
-        self.outputs.update({inputs_type: copy.deepcopy(all_inputs) for inputs_type, all_inputs in self.inputs.iteritems() if inputs_type in set(['hiddenzone', 'organs', 'roots'])})
+        self.outputs.update({inputs_type: copy.deepcopy(all_inputs) for inputs_type, all_inputs in self.inputs.iteritems() if inputs_type in set(['hiddenzone', 'elements', 'roots'])})
 
         # Hidden growing zones
         all_hiddenzone_inputs = self.inputs['hiddenzone']
         all_hiddenzone_outputs = self.outputs['hiddenzone']
 
-        # organs
-        all_organs_inputs = self.inputs['organs']
-        all_organs_outputs = self.outputs['organs']
+        # elements
+        all_elements_inputs = self.inputs['elements']
+        all_elements_outputs = self.outputs['elements']
 
         # roots
         all_roots_inputs = self.inputs['roots']
         all_roots_outputs = self.outputs['roots']
 
-        # hidden zones and organs
+        # hidden zones and elements
         for hiddenzone_id, hiddenzone_inputs in all_hiddenzone_inputs.iteritems():
+
+            if hiddenzone_id[2] == 5:
+                pass
 
             curr_hiddenzone_outputs = all_hiddenzone_outputs[hiddenzone_id]
 
@@ -127,11 +130,11 @@ class Simulation(object):
                 ## delta Nstruct of the enclosed internode
                 delta_internode_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_internode_enclosed_mstruct)
 
-                internode_id = hiddenzone_id + tuple(['internode'])
-                curr_organ_inputs = all_organs_inputs[internode_id]
-                curr_organ_outputs = all_organs_outputs[internode_id]
+                visible_internode_id = hiddenzone_id + tuple(['internode','StemElement'])
+                curr_visible_internode_inputs = all_elements_inputs[visible_internode_id]
+                curr_visible_internode_outputs = all_elements_outputs[visible_internode_id]
                 ## Delta mstruct of the emerged internode
-                delta_internode_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSINW'], curr_organ_inputs['mstruct'], curr_organ_inputs['green_area'])
+                delta_internode_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSINW'], curr_visible_internode_inputs['mstruct'], curr_visible_internode_inputs['green_area'])
                 ## Delta Nstruct of the emerged internode
                 delta_internode_Nstruct = model.calculate_delta_Nstruct(delta_internode_mstruct)
                 ## Export of sucrose from hiddenzone towards emerged internode
@@ -140,11 +143,11 @@ class Simulation(object):
                 export_amino_acids = model.calculate_export_amino_acids(delta_internode_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
 
                # Update of internode outputs
-                curr_organ_outputs['mstruct'] += delta_internode_mstruct
-                curr_organ_outputs['Nstruct'] += delta_internode_Nstruct
-                curr_organ_outputs['sucrose'] += export_sucrose
-                curr_organ_outputs['amino_acids'] += export_amino_acids
-                self.outputs['organs'][internode_id] = curr_organ_outputs
+                curr_visible_internode_outputs['mstruct'] += delta_internode_mstruct
+                curr_visible_internode_outputs['Nstruct'] += delta_internode_Nstruct
+                curr_visible_internode_outputs['sucrose'] += export_sucrose
+                curr_visible_internode_outputs['amino_acids'] += export_amino_acids
+                self.outputs['elements'][visible_internode_id] = curr_visible_internode_outputs
 
             # Delta Growth leaf
 
@@ -160,19 +163,14 @@ class Simulation(object):
                 ## delta Nstruct of the enclosed en leaf
                 delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
 
-                share_leaf_getting_visible_mstruct, share_leaf_getting_visible_Nstruct = 0, 0
-                if delta_leaf_enclosed_mstruct < 0: #: Pseudostem length decreased because internode elongation. We assume that internode n starts to elongate when sheath n-1 is mature.
-                   delta_leaf_enclosed_mstruct, delta_leaf_enclosed_Nstruct = 0, 0
-                   share_leaf_getting_visible_mstruct = abs(delta_leaf_enclosed_mstruct) / hiddenzone_inputs['mstruct']
-                   share_leaf_getting_visible_Nstruct = abs(delta_leaf_enclosed_Nstruct) / hiddenzone_inputs['leaf_enclosed_Nstruct']
-
-                lamina_id = hiddenzone_id + tuple(['blade'])
+                #: Leaf is growing
+                visible_lamina_id = hiddenzone_id + tuple(['blade','LeafElement1'])
                 #: Lamina is growing
-                if all_organs_inputs[lamina_id]['is_growing']:
-                    curr_organ_inputs = all_organs_inputs[lamina_id]
-                    curr_organ_outputs = all_organs_outputs[lamina_id]
+                if all_elements_inputs[visible_lamina_id]['is_growing']:
+                    curr_visible_lamina_inputs = all_elements_inputs[visible_lamina_id]
+                    curr_visible_lamina_outputs = all_elements_outputs[visible_lamina_id]
                     ## Delta mstruct of the emerged lamina
-                    delta_lamina_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSLW'], curr_organ_inputs['mstruct'], curr_organ_inputs['green_area'])
+                    delta_lamina_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSLW'], curr_visible_lamina_inputs['mstruct'], curr_visible_lamina_inputs['green_area'])
                     ## Delta Nstruct of the emerged lamina
                     delta_lamina_Nstruct = model.calculate_delta_Nstruct(delta_lamina_mstruct)
                     ## Export of sucrose from hiddenzone towards emerged lamina
@@ -181,20 +179,19 @@ class Simulation(object):
                     export_amino_acids = model.calculate_export_amino_acids(delta_lamina_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
 
                     # Update of lamina outputs
-                    curr_organ_outputs['mstruct'] += delta_lamina_mstruct + share_leaf_getting_visible_mstruct * hiddenzone_inputs['mstruct']
-                    curr_organ_outputs['Nstruct'] += delta_lamina_Nstruct + share_leaf_getting_visible_Nstruct * hiddenzone_inputs['leaf_enclosed_Nstruct']
-                    curr_organ_outputs['sucrose'] += export_sucrose + share_leaf_getting_visible_mstruct * hiddenzone_inputs['sucrose']
-                    curr_organ_outputs['amino_acids'] += export_amino_acids + share_leaf_getting_visible_mstruct * hiddenzone_inputs['amino_acids']
-                    curr_organ_outputs['fructan'] += share_leaf_getting_visible_mstruct * hiddenzone_inputs['fructan']
-                    curr_organ_outputs['proteins'] += share_leaf_getting_visible_mstruct * hiddenzone_inputs['proteins']
-                    self.outputs['organs'][lamina_id] = curr_organ_outputs
+                    curr_visible_lamina_outputs['mstruct'] += delta_lamina_mstruct
+                    curr_visible_lamina_outputs['Nstruct'] += delta_lamina_Nstruct
+                    curr_visible_lamina_outputs['sucrose'] += export_sucrose
+                    curr_visible_lamina_outputs['amino_acids'] += export_amino_acids
+
+                    self.outputs['elements'][visible_lamina_id] = curr_visible_lamina_outputs
 
                 else: #: Mature lamina, growing sheath
-                    sheath_id = hiddenzone_id + tuple(['sheath'])
-                    curr_organ_inputs = all_organs_inputs[sheath_id]
-                    curr_organ_outputs = all_organs_outputs[sheath_id]
+                    visible_sheath_id = hiddenzone_id + tuple(['sheath','StemElement']) # The hidden part of the sheath is only updated once, at the end of leaf elongation, by remobilisation from the hiddenzone
+                    curr_visible_sheath_inputs = all_elements_inputs[visible_sheath_id]
+                    curr_visible_sheath_outputs = all_elements_outputs[visible_sheath_id]
                     ## Delta mstruct of the emerged sheath
-                    delta_sheath_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSSW'], curr_organ_inputs['mstruct'], curr_organ_inputs['green_area'])
+                    delta_sheath_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSSW'], curr_visible_sheath_inputs['mstruct'], curr_visible_sheath_inputs['green_area'])
                     ## Delta Nstruct of the emerged sheath
                     delta_sheath_Nstruct = model.calculate_delta_Nstruct(delta_sheath_mstruct)
                     ## Export of sucrose from hiddenzone towards emerged sheath
@@ -203,13 +200,11 @@ class Simulation(object):
                     export_amino_acids = model.calculate_export_amino_acids(delta_sheath_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
 
                     # Update of sheath outputs
-                    curr_organ_outputs['mstruct'] += delta_sheath_mstruct + share_leaf_getting_visible_mstruct * hiddenzone_inputs['mstruct']
-                    curr_organ_outputs['Nstruct'] += delta_sheath_Nstruct + share_leaf_getting_visible_Nstruct * hiddenzone_inputs['leaf_enclosed_Nstruct']
-                    curr_organ_outputs['sucrose'] += export_sucrose + share_leaf_getting_visible_mstruct * hiddenzone_inputs['sucrose']
-                    curr_organ_outputs['amino_acids'] += export_amino_acids + share_leaf_getting_visible_mstruct * hiddenzone_inputs['amino_acids']
-                    curr_organ_outputs['fructan'] += share_leaf_getting_visible_mstruct * hiddenzone_inputs['fructan']
-                    curr_organ_outputs['proteins'] += share_leaf_getting_visible_mstruct * hiddenzone_inputs['proteins']
-                    self.outputs['organs'][sheath_id] = curr_organ_outputs
+                    curr_visible_sheath_outputs['mstruct'] += delta_sheath_mstruct
+                    curr_visible_sheath_outputs['Nstruct'] += delta_sheath_Nstruct
+                    curr_visible_sheath_outputs['sucrose'] += export_sucrose
+                    curr_visible_sheath_outputs['amino_acids'] += export_amino_acids
+                    self.outputs['elements'][visible_sheath_id] = curr_visible_sheath_outputs
 
 
             # CN consumption due to mstruct/Nstruct growth of the enclosed leaf and of the internode
@@ -220,31 +215,34 @@ class Simulation(object):
             # Update of outputs
             curr_hiddenzone_outputs['leaf_enclosed_mstruct'] += delta_leaf_enclosed_mstruct
             curr_hiddenzone_outputs['leaf_enclosed_Nstruct'] += delta_leaf_enclosed_Nstruct
-            curr_hiddenzone_outputs['internode_mstruct'] += delta_internode_enclosed_mstruct
-            curr_hiddenzone_outputs['internode_Nstruct'] += delta_internode_enclosed_Nstruct
+            curr_hiddenzone_outputs['internode_enclosed_mstruct'] += delta_internode_enclosed_mstruct
+            curr_hiddenzone_outputs['internode_enclosed_Nstruct'] += delta_internode_enclosed_Nstruct
+            curr_hiddenzone_outputs['mstruct'] = curr_hiddenzone_outputs['leaf_enclosed_mstruct'] + curr_hiddenzone_outputs['internode_enclosed_mstruct']
             curr_hiddenzone_outputs['sucrose'] -= (curr_hiddenzone_outputs['sucrose_consumption_mstruct'] + curr_hiddenzone_outputs['Respi_growth'] + export_sucrose) # TODO: Add checks for negative sucrose value
             curr_hiddenzone_outputs['amino_acids'] -= (curr_hiddenzone_outputs['AA_consumption_mstruct'] + export_amino_acids) # TODO: Add checks for negative AA value
             self.outputs['hiddenzone'][hiddenzone_id] = curr_hiddenzone_outputs
 
             # Remobilisation at the end of leaf elongation
             if not hiddenzone_inputs['leaf_is_growing'] and hiddenzone_inputs['delta_leaf_L'] > 0:
-               share = curr_hiddenzone_outputs['leaf_mstruct'] / curr_hiddenzone_outputs['mstruct']
+               share = curr_hiddenzone_outputs['leaf_enclosed_mstruct'] / curr_hiddenzone_outputs['mstruct']
 
-               ## Add to sheath
-               sheath_id = hiddenzone_id + tuple(['sheath'])
-               curr_organ_outputs = self.outputs['organs'][sheath_id]
-               curr_organ_outputs['mstruct'] += curr_hiddenzone_outputs['leaf_enclosed_mstruct']
-               curr_organ_outputs['Nstruct'] += curr_hiddenzone_outputs['leaf_enclosed_Nstruct']
-               curr_organ_outputs['sucrose'] += curr_hiddenzone_outputs['sucrose'] * share
-               curr_organ_outputs['amino_acids'] += curr_hiddenzone_outputs['amino_acids'] * share
-               curr_organ_outputs['fructan'] += curr_hiddenzone_outputs['fructan'] * share
-               curr_organ_outputs['proteins'] += curr_hiddenzone_outputs['proteins'] * share
-               self.outputs['organs'][sheath_id] = curr_organ_outputs
+               ## Add to hidden part of the sheath
+               hidden_sheath_id = hiddenzone_id + tuple(['sheath','HiddenElement'])
+               curr_hidden_sheath_outputs = self.outputs['elements'][hidden_sheath_id]
+               curr_hidden_sheath_outputs['mstruct'] += curr_hiddenzone_outputs['leaf_enclosed_mstruct']
+               curr_hidden_sheath_outputs['Nstruct'] += curr_hiddenzone_outputs['leaf_enclosed_Nstruct']
+               curr_hidden_sheath_outputs['sucrose'] += curr_hiddenzone_outputs['sucrose'] * share
+               curr_hidden_sheath_outputs['amino_acids'] += curr_hiddenzone_outputs['amino_acids'] * share
+               curr_hidden_sheath_outputs['fructan'] += curr_hiddenzone_outputs['fructan'] * share
+               curr_hidden_sheath_outputs['proteins'] += curr_hiddenzone_outputs['proteins'] * share
+               self.outputs['elements'][hidden_sheath_id] = curr_hidden_sheath_outputs
 
                ## Remove in hiddenzone
                curr_hiddenzone_outputs = self.outputs['hiddenzone'][hiddenzone_id]
                curr_hiddenzone_outputs['leaf_enclosed_mstruct'] = 0
                curr_hiddenzone_outputs['leaf_enclosed_Nstruct'] = 0
+               curr_hiddenzone_outputs['mstruct'] = curr_hiddenzone_outputs['internode_enclosed_mstruct']
+               curr_hiddenzone_outputs['Nstruct'] = curr_hiddenzone_outputs['internode_enclosed_Nstruct']
                curr_hiddenzone_outputs['sucrose'] -= curr_hiddenzone_outputs['sucrose'] * share
                curr_hiddenzone_outputs['amino_acids'] -= curr_hiddenzone_outputs['amino_acids'] * share
                curr_hiddenzone_outputs['fructan'] -= curr_hiddenzone_outputs['fructan'] * share
@@ -252,18 +250,26 @@ class Simulation(object):
                self.outputs['hiddenzone'][hiddenzone_id] = curr_hiddenzone_outputs
 
             # Remobilisation at the end of internode elongation
-            if not hiddenzone_inputs['internode_is_growing'] and hiddenzone_inputs['delta_internode_L'] > 0: # Internodes stop to elongate after leaves
+            if not hiddenzone_inputs['internode_is_growing'] and hiddenzone_inputs['internode_L'] > 0: # Internodes stop to elongate after leaves. We cannot test delta_internode_L > 0 for the cases of short internodes which are mature before GA production.
 
-               ## Add to internode
-               internode_id = hiddenzone_id + tuple(['internode'])
-               curr_organ_outputs = self.outputs['organs'][internode_id] # TODO: Initialise internode organ outputs when starting its elongation
-               curr_organ_outputs['mstruct'] += curr_hiddenzone_outputs['internode_enclosed_mstruct']
-               curr_organ_outputs['Nstruct'] += curr_hiddenzone_outputs['internode_enclosed_Nstruct']
-               curr_organ_outputs['sucrose'] += curr_hiddenzone_outputs['sucrose']
-               curr_organ_outputs['amino_acids'] += curr_hiddenzone_outputs['amino_acids']
-               curr_organ_outputs['fructan'] += curr_hiddenzone_outputs['fructan'] * share
-               curr_organ_outputs['proteins'] += curr_hiddenzone_outputs['proteins'] * share
-               self.outputs['organs'][internode_id] = curr_organ_outputs
+                ## Add to hidden part of the internode
+                hidden_internode_id = hiddenzone_id + tuple(['internode','HiddenElement'])
+                if hidden_internode_id not in self.outputs['elements'].keys():
+                    new_internode_outputs = parameters.OrganInit().__dict__
+                    self.outputs['elements'][hidden_internode_id] = new_internode_outputs
+                curr_hidden_internode_outputs = self.outputs['elements'][hidden_internode_id] # TODO: Initialise internode element outputs when starting its elongation
+                curr_hidden_internode_outputs['mstruct'] += curr_hiddenzone_outputs['internode_enclosed_mstruct']
+                curr_hidden_internode_outputs['Nstruct'] += curr_hiddenzone_outputs['internode_enclosed_Nstruct']
+                curr_hidden_internode_outputs['sucrose'] += curr_hiddenzone_outputs['sucrose']
+                curr_hidden_internode_outputs['amino_acids'] += curr_hiddenzone_outputs['amino_acids']
+                curr_hidden_internode_outputs['fructan'] += curr_hiddenzone_outputs['fructan']
+                curr_hidden_internode_outputs['proteins'] += curr_hiddenzone_outputs['proteins']
+                curr_hidden_internode_outputs['is_growing'] = False
+                self.outputs['elements'][hidden_internode_id] = curr_hidden_internode_outputs
+
+            #: Delete Hiddenzone after remobilisation so it is not sent to CN Wheat
+            if not hiddenzone_inputs['leaf_is_growing'] and not hiddenzone_inputs['internode_is_growing']:
+                del self.outputs['hiddenzone'][hiddenzone_id]
 
 
         # Roots

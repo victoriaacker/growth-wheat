@@ -48,6 +48,8 @@ class HiddenZoneInit:
     Initial values for hidden zones
     """
     def __init__(self):
+
+        ## MG : I think none of these parameters is usefull since new hiddenzones are only set by elongwheat which already defines all these values
         self.leaf_is_growing = True
         self.internode_is_growing = False
         self.internode_is_mature = False
@@ -66,15 +68,16 @@ class HiddenZoneInit:
         self.SSLW = None # no calculation before emergence Ln-1
         self.SSSW = None # no calculation before emergence Ln-1
         self.leaf_is_emerged = False
+        self.leaf_enclosed_mstruct = 2.65E-08
+        self.internode_enclosed_mstruct = 0
+        self.mstruct = self.leaf_enclosed_mstruct + self.internode_enclosed_mstruct
+        self.leaf_enclosed_Nstruct = self.leaf_enclosed_mstruct * 0.0322 # parameter value in growth wheat
+        self.internode_enclosed_Nstruct = self.internode_enclosed_mstruct * 0.0322 # parameter value in growth wheat
         self.sucrose = 1E-3
         self.amino_acids = 1E-3
         self.fructan = 0
-        self.leaf_enclosed_mstruct = 2.65E-08
-        self.internode_mstruct = 0
-        self.mstruct = self.leaf_enclosed_mstruct + self.internode_mstruct
-        self.leaf_enclosed_Nstruct = self.leaf_enclosed_mstruct * 0.0322 # parameter value in growth wheat
-        self.internode_Nstruct = self.internode_mstruct * 0.0322 # parameter value in growth wheat
         self.proteins = 0
+        self.cytokinins = 0 #: AU
 
 class OrganInit:
     """
@@ -82,8 +85,10 @@ class OrganInit:
     """
     def __init__(self):
         self.is_growing = True
-        self.mstruct = 0
         self.green_area = 0
-        self.sucrose = 0
-        self.amino_acids = 0
-        self.Nstruct = 0
+        self.sucrose = 0              #: µmol C
+        self.amino_acids = 0          #: µmol N
+        self.fructan = 0              #: µmol C
+        self.proteins = 0             #: µmol N
+        self.mstruct = 0              #: g
+        self.Nstruct = 0              #: g
