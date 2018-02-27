@@ -165,7 +165,6 @@ class Simulation(object):
                 ## delta Nstruct of the enclosed en leaf
                 delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
 
-                #: Leaf is growing
                 visible_lamina_id = hiddenzone_id + tuple(['blade','LeafElement1'])
                 #: Lamina is growing
                 if all_elements_inputs[visible_lamina_id]['is_growing']:
