@@ -29,7 +29,9 @@ import copy
 from respiwheat.model import RespirationModel
 
 #: the inputs needed by GrowthWheat
-HIDDENZONE_INPUTS = ['leaf_is_growing','internode_is_growing','leaf_L', 'delta_leaf_L', 'internode_L','delta_internode_L', 'leaf_dist_to_emerge', 'delta_leaf_dist_to_emerge','internode_dist_to_emerge','delta_internode_dist_to_emerge', 'SSLW', 'SSSW', 'leaf_is_emerged','SSINW','internode_is_visible', 'sucrose', 'amino_acids', 'fructan','proteins','leaf_enclosed_mstruct','leaf_enclosed_Nstruct','internode_enclosed_mstruct', 'internode_enclosed_Nstruct','mstruct']
+HIDDENZONE_INPUTS = ['leaf_is_growing','internode_is_growing','leaf_L', 'delta_leaf_L', 'internode_L','delta_internode_L', 'leaf_pseudostem_length', 'delta_leaf_pseudostem_length',
+                     'internode_distance_to_emergence','delta_internode_distance_to_emergence', 'SSLW', 'SSSW', 'SSINW','leaf_is_emerged', 'internode_is_visible',
+                     'sucrose', 'amino_acids', 'fructan','proteins','leaf_enclosed_mstruct','leaf_enclosed_Nstruct','internode_enclosed_mstruct', 'internode_enclosed_Nstruct', 'mstruct']
 ELEMENT_INPUTS = ['is_growing', 'mstruct', 'green_area', 'sucrose', 'amino_acids', 'fructan','proteins','Nstruct']
 ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
 
@@ -126,7 +128,7 @@ class Simulation(object):
                delta_internode_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_internode_enclosed_mstruct)
             else : #: Internode is visible
                 ## delta mstruct of the enclosed internode
-                delta_internode_enclosed_mstruct = model.calculate_delta_internode_enclosed_mstruct(hiddenzone_inputs['internode_dist_to_emerge'], hiddenzone_inputs['delta_internode_dist_to_emerge'])
+                delta_internode_enclosed_mstruct = model.calculate_delta_internode_enclosed_mstruct(hiddenzone_inputs['internode_distance_to_emerge'], hiddenzone_inputs['delta_internode_distance_to_emerge'])
                 ## delta Nstruct of the enclosed internode
                 delta_internode_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_internode_enclosed_mstruct)
 
@@ -159,7 +161,7 @@ class Simulation(object):
 
             else: #: leaf has emerged
                 ## delta mstruct of the enclosed leaf (which length is assumed to equal the length of the pseudostem)
-                delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct(hiddenzone_inputs['leaf_dist_to_emerge'], hiddenzone_inputs['delta_leaf_dist_to_emerge'])
+                delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct(hiddenzone_inputs['leaf_pseudostem_length'], hiddenzone_inputs['delta_leaf_pseudostem_length'])
                 ## delta Nstruct of the enclosed en leaf
                 delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
 
@@ -208,9 +210,9 @@ class Simulation(object):
 
 
             # CN consumption due to mstruct/Nstruct growth of the enclosed leaf and of the internode
-            curr_hiddenzone_outputs['AA_consumption_mstruct'] = model.calculate_s_Nstruct_amino_acids( (delta_leaf_enclosed_Nstruct + delta_internode_enclosed_Nstruct), delta_lamina_Nstruct, delta_sheath_Nstruct)  #: Consumption of amino acids due to mstruct growth (µmol N)
-            curr_hiddenzone_outputs['sucrose_consumption_mstruct'] = model.calculate_s_mstruct_sucrose( (delta_leaf_enclosed_mstruct + delta_internode_enclosed_mstruct), delta_lamina_mstruct, delta_sheath_mstruct, curr_hiddenzone_outputs['AA_consumption_mstruct']) #: Consumption of sucrose due to mstruct growth (µmol C)
-            curr_hiddenzone_outputs['Respi_growth'] = RespirationModel.R_growth(curr_hiddenzone_outputs['sucrose_consumption_mstruct'])                                      #: Respiration growth (µmol C)
+            curr_hiddenzone_outputs['AA_consumption_mstruct'] = model.calculate_s_Nstruct_amino_acids( (delta_leaf_enclosed_Nstruct + delta_internode_enclosed_Nstruct), delta_lamina_Nstruct, delta_sheath_Nstruct)  #: Consumption of amino acids due to mstruct growth (Âµmol N)
+            curr_hiddenzone_outputs['sucrose_consumption_mstruct'] = model.calculate_s_mstruct_sucrose( (delta_leaf_enclosed_mstruct + delta_internode_enclosed_mstruct), delta_lamina_mstruct, delta_sheath_mstruct, curr_hiddenzone_outputs['AA_consumption_mstruct']) #: Consumption of sucrose due to mstruct growth (Âµmol C)
+            curr_hiddenzone_outputs['Respi_growth'] = RespirationModel.R_growth(curr_hiddenzone_outputs['sucrose_consumption_mstruct'])                                      #: Respiration growth (Âµmol C)
 
             # Update of outputs
             curr_hiddenzone_outputs['leaf_enclosed_mstruct'] += delta_leaf_enclosed_mstruct

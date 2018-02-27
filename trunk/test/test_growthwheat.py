@@ -36,15 +36,15 @@ from growthwheat import model, simulation, converter
 
 INPUTS_DIRPATH = 'inputs'
 HIDDENZONE_INPUTS_FILENAME = 'hiddenzones_inputs.csv'
-ORGAN_INPUTS_FILENAME = 'organs_inputs.csv'
+ELEMENT_INPUTS_FILENAME = 'elements_inputs.csv'
 ROOT_INPUTS_FILENAME = 'roots_inputs.csv'
 
 OUTPUTS_DIRPATH = 'outputs'
 DESIRED_HIDDENZONE_OUTPUTS_FILENAME = 'desired_hiddenzones_outputs.csv'
-DESIRED_ORGAN_OUTPUTS_FILENAME = 'desired_organs_outputs.csv'
+DESIRED_ELEMENT_OUTPUTS_FILENAME = 'desired_elements_outputs.csv'
 DESIRED_ROOT_OUTPUTS_FILENAME = 'desired_roots_outputs.csv'
 ACTUAL_HIDDENZONE_OUTPUTS_FILENAME = 'actual_hiddenzones_outputs.csv'
-ACTUAL_ORGAN_OUTPUTS_FILENAME = 'actual_organs_outputs.csv'
+ACTUAL_ELEMENT_OUTPUTS_FILENAME = 'actual_elements_outputs.csv'
 ACTUAL_ROOT_OUTPUTS_FILENAME = 'actual_roots_outputs.csv'
 
 PRECISION = 6
@@ -61,7 +61,7 @@ def compare_actual_to_desired(data_dirpath, actual_data_df, desired_data_filenam
         actual_data_df.to_csv(actual_data_filepath, na_rep='NA', index=False)
 
     # keep only numerical data
-    for column in ('axis', 'organ', 'leaf_is_emerged', 'internode_is_visible','is_growing'):
+    for column in ('axis', 'organ', 'element', 'leaf_is_emerged', 'internode_is_visible','is_growing'):
         if column in desired_data_df.columns:
             assert desired_data_df[column].equals(actual_data_df[column])
             del desired_data_df[column]
@@ -74,29 +74,29 @@ def compare_actual_to_desired(data_dirpath, actual_data_df, desired_data_filenam
 def test_run():
     # read growthwheat inputs at t0
     hiddenzones_inputs_t0 = pd.read_csv(os.path.join(INPUTS_DIRPATH, HIDDENZONE_INPUTS_FILENAME))
-    organ_inputs_t0 = pd.read_csv(os.path.join(INPUTS_DIRPATH, ORGAN_INPUTS_FILENAME))
+    element_inputs_t0 = pd.read_csv(os.path.join(INPUTS_DIRPATH, ELEMENT_INPUTS_FILENAME))
     root_inputs_t0 = pd.read_csv(os.path.join(INPUTS_DIRPATH, ROOT_INPUTS_FILENAME))
 
     # Create population
     simulation_ = simulation.Simulation(delta_t=3600)
     # convert the dataframe to simulation inputs format
-    all_inputs_dict = converter.from_dataframes(hiddenzones_inputs_t0, organ_inputs_t0, root_inputs_t0)
+    all_inputs_dict = converter.from_dataframes(hiddenzones_inputs_t0, element_inputs_t0, root_inputs_t0)
     hz_inputs_reconverted_df = all_inputs_dict['hiddenzone']
-    organ_inputs_reconverted_df = all_inputs_dict['organs']
+    element_inputs_reconverted_df = all_inputs_dict['elements']
     roots_inputs_reconverted_df = all_inputs_dict['roots']
     # compare inputs
 ##    compare_actual_to_desired('inputs', hz_inputs_reconverted_df, HIDDENZONE_INPUTS_FILENAME)
-##    compare_actual_to_desired('inputs', organ_inputs_reconverted_df, ORGAN_INPUTS_FILENAME)
+##    compare_actual_to_desired('inputs', organ_inputs_reconverted_df, ELEMENT_INPUTS_FILENAME)
 ##    compare_actual_to_desired('inputs', roots_inputs_reconverted_df, ROOT_INPUTS_FILENAME)
     # initialize the simulation with the inputs
     simulation_.initialize(all_inputs_dict)
     # run the simulation
     simulation_.run()
     # convert the outputs to Pandas dataframe
-    hiddenzone_outputs_df, organ_outputs_df, root_outputs_df = converter.to_dataframes(simulation_.outputs)
+    hiddenzone_outputs_df, element_outputs_df, root_outputs_df = converter.to_dataframes(simulation_.outputs)
     # compare outputs
     compare_actual_to_desired('outputs', hiddenzone_outputs_df, DESIRED_HIDDENZONE_OUTPUTS_FILENAME, ACTUAL_HIDDENZONE_OUTPUTS_FILENAME)
-    compare_actual_to_desired('outputs', organ_outputs_df, DESIRED_ORGAN_OUTPUTS_FILENAME, ACTUAL_ORGAN_OUTPUTS_FILENAME)
+    compare_actual_to_desired('outputs', element_outputs_df, DESIRED_ELEMENT_OUTPUTS_FILENAME, ACTUAL_ELEMENT_OUTPUTS_FILENAME)
     compare_actual_to_desired('outputs', root_outputs_df, DESIRED_ROOT_OUTPUTS_FILENAME, ACTUAL_ROOT_OUTPUTS_FILENAME)
 
 if __name__ == '__main__':
