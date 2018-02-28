@@ -42,7 +42,7 @@ def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L):
 
 def calculate_delta_internode_enclosed_mstruct(internode_L, delta_internode_L):
     """ Relation between length and mstruct for the internode segment located in the hidden zone.
-    Same relationship than for enclosed leaf.
+    Same relationship than for enclosed leaf corrected by RATIO_ENCLOSED_LEAF_INTERNODE.
     Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1975) and expressed in g of dry mass.
     Parameter RATIO_MSTRUCT_DM is then used to convert in g of structural dry mass.
 
@@ -55,7 +55,7 @@ def calculate_delta_internode_enclosed_mstruct(internode_L, delta_internode_L):
         :class:`float`
     """
 
-    return parameters.ALPHA * parameters.BETA * internode_L**(parameters.BETA-1) * delta_internode_L * parameters.RATIO_MSTRUCT_DM
+    return parameters.RATIO_ENCLOSED_LEAF_INTERNODE * parameters.ALPHA * parameters.BETA * internode_L**(parameters.BETA-1) * delta_internode_L * parameters.RATIO_MSTRUCT_DM
 
 def calculate_delta_emerged_tissue_mstruct(SSW, previous_mstruct, area):
     """ delta mstruct of emerged tissue (lamina, sheath and internode). Calculated from tissue area.

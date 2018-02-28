@@ -33,6 +33,7 @@ RATIO_AMINO_ACIDS_MSTRUCT  = 0.0322   #: Mass of N (under amino acid/protein for
 AMINO_ACIDS_C_RATIO = 3.67            #: Mean number of mol of C in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
 AMINO_ACIDS_N_RATIO = 1.17            #: Mean number of mol of N in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
 RATIO_MSTRUCT_DM = 0.8                #: Ratio mstruc/dry matter (dimensionless)
+RATIO_ENCLOSED_LEAF_INTERNODE = 5     #: We use ratio sheath:lamina of the specific structural dry masses (from data of J. Bertheloot, 2004)
 
 ## Roots
 VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry matter growth (µmol C s-1 g-1 MS)

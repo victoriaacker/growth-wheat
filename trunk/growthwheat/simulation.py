@@ -111,9 +111,6 @@ class Simulation(object):
         # hidden zones and elements
         for hiddenzone_id, hiddenzone_inputs in all_hiddenzone_inputs.iteritems():
 
-            if hiddenzone_id[2] == 5:
-                pass
-
             curr_hiddenzone_outputs = all_hiddenzone_outputs[hiddenzone_id]
 
             # Initialisation of the exports towards the growing lamina or sheath
