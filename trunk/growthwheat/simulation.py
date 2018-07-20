@@ -30,9 +30,9 @@ from respiwheat.model import RespirationModel
 
 #: the inputs needed by GrowthWheat
 HIDDENZONE_INPUTS = ['leaf_is_growing','internode_is_growing','leaf_L', 'delta_leaf_L', 'internode_L','delta_internode_L', 'leaf_pseudostem_length', 'delta_leaf_pseudostem_length',
-                     'internode_distance_to_emergence','delta_internode_distance_to_emergence', 'SSLW', 'SSSW', 'SSINW','leaf_is_emerged', 'internode_is_visible',
+                     'internode_distance_to_emergence','delta_internode_distance_to_emergence', 'SSLW', 'LSSW', 'LSIW','leaf_is_emerged', 'internode_is_visible','leaf_pseudo_age','internode_pseudo_age',
                      'sucrose', 'amino_acids', 'fructan','proteins','leaf_enclosed_mstruct','leaf_enclosed_Nstruct','internode_enclosed_mstruct', 'internode_enclosed_Nstruct', 'mstruct']
-ELEMENT_INPUTS = ['is_growing', 'mstruct', 'green_area', 'sucrose', 'amino_acids', 'fructan','proteins','Nstruct']
+ELEMENT_INPUTS = ['is_growing', 'mstruct', 'green_area','length', 'sucrose', 'amino_acids', 'fructan','proteins','Nstruct']
 ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
 
 #: the outputs computed by GrowthWheat
@@ -133,13 +133,13 @@ class Simulation(object):
                 curr_visible_internode_inputs = all_elements_inputs[visible_internode_id]
                 curr_visible_internode_outputs = all_elements_outputs[visible_internode_id]
                 ## Delta mstruct of the emerged internode
-                delta_internode_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSINW'], curr_visible_internode_inputs['mstruct'], curr_visible_internode_inputs['green_area'])
+                delta_internode_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['LSIW'], curr_visible_internode_inputs['mstruct'], curr_visible_internode_inputs['length'])
                 ## Delta Nstruct of the emerged internode
                 delta_internode_Nstruct = model.calculate_delta_Nstruct(delta_internode_mstruct)
                 ## Export of sucrose from hiddenzone towards emerged internode
-                export_sucrose = model.calculate_export_sucrose(delta_internode_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
+                export_sucrose = model.calculate_export(delta_internode_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
                 ## Export of amino acids from hiddenzone towards emerged internode
-                export_amino_acids = model.calculate_export_amino_acids(delta_internode_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
+                export_amino_acids = model.calculate_export(delta_internode_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
 
                # Update of internode outputs
                 curr_visible_internode_outputs['mstruct'] += delta_internode_mstruct
@@ -158,7 +158,12 @@ class Simulation(object):
 
             else: #: leaf has emerged
                 ## delta mstruct of the enclosed leaf (which length is assumed to equal the length of the pseudostem)
-                delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct(hiddenzone_inputs['leaf_pseudostem_length'], hiddenzone_inputs['delta_leaf_pseudostem_length'])
+                delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct_postE(hiddenzone_inputs['leaf_pseudostem_length'],
+                                                                                                hiddenzone_inputs['delta_leaf_pseudostem_length'],
+                                                                                                hiddenzone_inputs['mstruct'],
+                                                                                                hiddenzone_inputs['LSSW'],
+                                                                                                hiddenzone_inputs['leaf_pseudo_age'],
+                                                                                                self.delta_t)
                 ## delta Nstruct of the enclosed en leaf
                 delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
 
@@ -171,16 +176,19 @@ class Simulation(object):
                     delta_lamina_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSLW'], curr_visible_lamina_inputs['mstruct'], curr_visible_lamina_inputs['green_area'])
                     ## Delta Nstruct of the emerged lamina
                     delta_lamina_Nstruct = model.calculate_delta_Nstruct(delta_lamina_mstruct)
-                    ## Export of sucrose from hiddenzone towards emerged lamina
-                    export_sucrose = model.calculate_export_sucrose(delta_lamina_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
-                    ## Export of amino acids from hiddenzone towards emerged lamina
-                    export_amino_acids = model.calculate_export_amino_acids(delta_lamina_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
+                    ## Export of metabolite from hiddenzone towards emerged lamina
+                    export_sucrose = model.calculate_export(delta_lamina_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
+                    export_amino_acids = model.calculate_export(delta_lamina_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
+                    export_fructan = model.calculate_export(delta_lamina_mstruct, hiddenzone_inputs['fructan'], hiddenzone_inputs['mstruct'])
+                    export_proteins = model.calculate_export(delta_lamina_mstruct, hiddenzone_inputs['proteins'], hiddenzone_inputs['mstruct'])
 
                     # Update of lamina outputs
                     curr_visible_lamina_outputs['mstruct'] += delta_lamina_mstruct
                     curr_visible_lamina_outputs['Nstruct'] += delta_lamina_Nstruct
                     curr_visible_lamina_outputs['sucrose'] += export_sucrose
                     curr_visible_lamina_outputs['amino_acids'] += export_amino_acids
+                    curr_visible_lamina_outputs['fructan'] += export_fructan
+                    curr_visible_lamina_outputs['proteins'] += export_proteins
 
                     self.outputs['elements'][visible_lamina_id] = curr_visible_lamina_outputs
 
@@ -189,19 +197,22 @@ class Simulation(object):
                     curr_visible_sheath_inputs = all_elements_inputs[visible_sheath_id]
                     curr_visible_sheath_outputs = all_elements_outputs[visible_sheath_id]
                     ## Delta mstruct of the emerged sheath
-                    delta_sheath_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['SSSW'], curr_visible_sheath_inputs['mstruct'], curr_visible_sheath_inputs['green_area'])
+                    delta_sheath_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['LSSW'], curr_visible_sheath_inputs['mstruct'], curr_visible_sheath_inputs['length'])
                     ## Delta Nstruct of the emerged sheath
                     delta_sheath_Nstruct = model.calculate_delta_Nstruct(delta_sheath_mstruct)
-                    ## Export of sucrose from hiddenzone towards emerged sheath
-                    export_sucrose = model.calculate_export_sucrose(delta_sheath_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
-                    ## Export of amino acids from hiddenzone towards emerged sheath
-                    export_amino_acids = model.calculate_export_amino_acids(delta_sheath_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
+                    ## Export of metabolite from hiddenzone towards emerged sheath
+                    export_sucrose = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
+                    export_amino_acids = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
+                    export_fructan = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['fructan'], hiddenzone_inputs['mstruct'])
+                    export_proteins = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['proteins'], hiddenzone_inputs['mstruct'])
 
                     # Update of sheath outputs
                     curr_visible_sheath_outputs['mstruct'] += delta_sheath_mstruct
                     curr_visible_sheath_outputs['Nstruct'] += delta_sheath_Nstruct
                     curr_visible_sheath_outputs['sucrose'] += export_sucrose
                     curr_visible_sheath_outputs['amino_acids'] += export_amino_acids
+                    curr_visible_sheath_outputs['fructan'] += export_fructan
+                    curr_visible_sheath_outputs['proteins'] += export_proteins
                     self.outputs['elements'][visible_sheath_id] = curr_visible_sheath_outputs
 
 
@@ -281,6 +292,6 @@ class Simulation(object):
             curr_root_outputs['mstruct'] += mstruct_growth
             curr_root_outputs['sucrose'] -= (mstruct_C_growth + curr_root_outputs['Respi_growth'])
             curr_root_outputs['Nstruct'] += Nstruct_growth
-            curr_root_outputs['amino_acids'] -= (Nstruct_N_growth)
+            curr_root_outputs['amino_acids'] -= Nstruct_N_growth
             curr_root_outputs['rate_mstruct_growth'] = mstruct_growth / self.delta_t
             self.outputs['roots'][root_id] = curr_root_outputs

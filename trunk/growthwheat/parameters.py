@@ -26,14 +26,18 @@ C_MOLAR_MASS = 12                     #: Carbon molar mass (g mol-1)
 N_MOLAR_MASS = 14                     #: Nitrogen molar mass (g mol-1)
 
 ## Shoot
-ALPHA = 1.537e-02                     #: Parameter of the relation between leaf mass and leaf length (g m^(-BETA))
+ALPHA = 0.106 # 1.537e-02                     #: Parameter of the relation between leaf mass and leaf length (g m^(-BETA))
 BETA = 1.28                           #: Parameter of the relation between leaf mass and leaf length (dimensionless)
-RATIO_SUCROSE_MSTRUCT =  0.384        #: Mass of C (under carbohydrate form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
-RATIO_AMINO_ACIDS_MSTRUCT  = 0.0322   #: Mass of N (under amino acid/protein form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
+RATIO_SUCROSE_MSTRUCT = 0.384        #: Mass of C (under carbohydrate form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
+RATIO_AMINO_ACIDS_MSTRUCT = 0.005#0.0322   #: Mass of N (under amino acid/protein form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
 AMINO_ACIDS_C_RATIO = 3.67            #: Mean number of mol of C in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
 AMINO_ACIDS_N_RATIO = 1.17            #: Mean number of mol of N in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
-RATIO_MSTRUCT_DM = 0.8                #: Ratio mstruc/dry matter (dimensionless)
+RATIO_MSTRUCT_DM = 0.8                #: Ratio mstruct/dry matter (dimensionless)
 RATIO_ENCLOSED_LEAF_INTERNODE = 5     #: We use ratio sheath:lamina of the specific structural dry masses (from data of J. Bertheloot, 2004)
+
+te = 271 * 3600                       #: Parametre end elongation feuille en mode automate (s); Fournier 2005 sur courbe corrigee - See elongwheat parameters
+te_IN = 210 * 3600                    #: Parametre end elongation EN en mode automate (s); Malvoisin 1984 II - See elongwheat parameters
+
 
 ## Roots
 VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry matter growth (µmol C s-1 g-1 MS)
@@ -80,6 +84,7 @@ class HiddenZoneInit:
         self.proteins = 0
         self.cytokinins = 0 #: AU
 
+
 class OrganInit:
     """
     Initial values for organs
@@ -93,3 +98,4 @@ class OrganInit:
         self.proteins = 0             #: µmol N
         self.mstruct = 0              #: g
         self.Nstruct = 0              #: g
+        self.conc_cytokinins = 15     #: AU / g mstruct
