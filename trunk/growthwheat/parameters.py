@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 
-from __future__ import division # use "//" to do integer division
+from __future__ import division  # use "//" to do integer division
 
 """
     growthwheat.parameters
@@ -25,11 +25,11 @@ from __future__ import division # use "//" to do integer division
 C_MOLAR_MASS = 12                     #: Carbon molar mass (g mol-1)
 N_MOLAR_MASS = 14                     #: Nitrogen molar mass (g mol-1)
 
-## Shoot
-ALPHA = 0.106 # 1.537e-02                     #: Parameter of the relation between leaf mass and leaf length (g m^(-BETA))
+# Shoot
+ALPHA = 0.106  # 1.537e-02            #: Parameter of the relation between leaf mass and leaf length (g m^(-BETA))
 BETA = 1.28                           #: Parameter of the relation between leaf mass and leaf length (dimensionless)
-RATIO_SUCROSE_MSTRUCT = 0.384        #: Mass of C (under carbohydrate form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
-RATIO_AMINO_ACIDS_MSTRUCT = 0.005#0.0322   #: Mass of N (under amino acid/protein form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
+RATIO_SUCROSE_MSTRUCT = 0.384         #: Mass of C (under carbohydrate form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
+RATIO_AMINO_ACIDS_MSTRUCT = 0.005     #: Mass of N (under amino acid/protein form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
 AMINO_ACIDS_C_RATIO = 3.67            #: Mean number of mol of C in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
 AMINO_ACIDS_N_RATIO = 1.17            #: Mean number of mol of N in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
 RATIO_MSTRUCT_DM = 0.8                #: Ratio mstruct/dry matter (dimensionless)
@@ -39,13 +39,11 @@ te = 271 * 3600                       #: Parametre end elongation feuille en mod
 te_IN = 210 * 3600                    #: Parametre end elongation EN en mode automate (s); Malvoisin 1984 II - See elongwheat parameters
 
 
-## Roots
+# Roots
 VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry matter growth (µmol C s-1 g-1 MS)
 K_ROOTS_GROWTH = 1250                 #: Affinity coefficient of root structural dry matter growth (µmol C g-1 MS)
 RATIO_C_MSTRUCT_ROOTS = 0.384         #: Mean contribution of carbon to root structural dry mass (g C g-1 Mstruct)
 RATIO_N_MSTRUCT_ROOTS_ = 0.02         #: Mean contribution of nitrogen to root structural dry mass (g N g-1 Mstruct)
-
-
 
 
 class HiddenZoneInit:
@@ -54,7 +52,7 @@ class HiddenZoneInit:
     """
     def __init__(self):
 
-        ## MG : I think none of these parameters is usefull since new hiddenzones are only set by elongwheat which already defines all these values
+        # MG : I think none of these parameters is usefull since new hiddenzones are only set by elongwheat which already defines all these values
         self.leaf_is_growing = True
         self.internode_is_growing = False
         self.internode_is_mature = False
@@ -66,23 +64,23 @@ class HiddenZoneInit:
         self.delta_leaf_L = 0
         self.internode_L = 0
         self.delta_internode_L = 0
-        self.leaf_Lmax = None # no calculation before emergence Ln-1
-        self.lamina_Lmax = None # no calculation before emergence Ln-1
-        self.sheath_Lmax = None # no calculation before emergence Ln-1
-        self.leaf_Wmax = None # no calculation before emergence Ln-1
-        self.SSLW = None # no calculation before emergence Ln-1
-        self.SSSW = None # no calculation before emergence Ln-1
+        self.leaf_Lmax = None  # no calculation before emergence Ln-1
+        self.lamina_Lmax = None  # no calculation before emergence Ln-1
+        self.sheath_Lmax = None  # no calculation before emergence Ln-1
+        self.leaf_Wmax = None  # no calculation before emergence Ln-1
+        self.SSLW = None  # no calculation before emergence Ln-1
+        self.SSSW = None  # no calculation before emergence Ln-1
         self.leaf_is_emerged = False
         self.leaf_enclosed_mstruct = 2.65E-08
         self.internode_enclosed_mstruct = 0
         self.mstruct = self.leaf_enclosed_mstruct + self.internode_enclosed_mstruct
-        self.leaf_enclosed_Nstruct = self.leaf_enclosed_mstruct * 0.0322 # parameter value in growth wheat
-        self.internode_enclosed_Nstruct = self.internode_enclosed_mstruct * 0.0322 # parameter value in growth wheat
+        self.leaf_enclosed_Nstruct = self.leaf_enclosed_mstruct * 0.0322  # parameter value in growth wheat
+        self.internode_enclosed_Nstruct = self.internode_enclosed_mstruct * 0.0322  # parameter value in growth wheat
         self.sucrose = 1E-3
         self.amino_acids = 1E-3
         self.fructan = 0
         self.proteins = 0
-        self.cytokinins = 0 #: AU
+        self.cytokinins = 0  #: AU
 
 
 class OrganInit:
@@ -98,4 +96,3 @@ class OrganInit:
         self.proteins = 0             #: µmol N
         self.mstruct = 0              #: g
         self.Nstruct = 0              #: g
-        self.conc_cytokinins = 15     #: AU / g mstruct

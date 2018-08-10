@@ -1,6 +1,9 @@
 # -*- coding: latin-1 -*-
 
-from __future__ import division # use "//" to do integer division
+from __future__ import division  # use "//" to do integer division
+import pandas as pd
+
+import simulation
 
 """
     growthwheat.converter
@@ -24,14 +27,11 @@ from __future__ import division # use "//" to do integer division
         $Id$
 """
 
-import pandas as pd
-
-import simulation
-
 #: the columns which define the topology in the input/output dataframe
 HIDDENZONE_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer']
-ELEMENT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ','element']
+ELEMENT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'metamer', 'organ', 'element']
 ROOT_TOPOLOGY_COLUMNS = ['plant', 'axis', 'organ']
+
 
 def from_dataframes(hiddenzone_inputs, element_inputs, root_inputs):
     """
@@ -80,6 +80,7 @@ def from_dataframes(hiddenzone_inputs, element_inputs, root_inputs):
 
     return {'hiddenzone': all_hiddenzone_dict, 'elements': all_element_dict, 'roots': all_root_dict}
 
+
 def to_dataframes(data_dict):
     """
     Convert outputs from Growth-Wheat format to Pandas dataframe.
@@ -107,7 +108,7 @@ def to_dataframes(data_dict):
         current_df = pd.concat([current_ids_df, current_data_df], axis=1)
         current_df.sort_values(by=current_topology_columns, inplace=True)
         current_columns_sorted = current_topology_columns + current_outputs_names
-        current_df = current_df.reindex_axis(current_columns_sorted, axis=1, copy=False)
+        current_df = current_df.reindex(current_columns_sorted, axis=1, copy=False)
         current_df.reset_index(drop=True, inplace=True)
         dataframes_dict[current_key] = current_df
     return dataframes_dict['hiddenzone'], dataframes_dict['elements'], dataframes_dict['roots']
