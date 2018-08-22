@@ -35,9 +35,22 @@ AMINO_ACIDS_N_RATIO = 1.17            #: Mean number of mol of N in 1 mol of the
 RATIO_MSTRUCT_DM = 0.8                #: Ratio mstruct/dry matter (dimensionless)
 RATIO_ENCLOSED_LEAF_INTERNODE = 5     #: We use ratio sheath:lamina of the specific structural dry masses (from data of J. Bertheloot, 2004)
 
-te = 271 * 3600                       #: Parametre end elongation feuille en mode automate (s); Fournier 2005 sur courbe corrigee - See elongwheat parameters
-te_IN = 210 * 3600                    #: Parametre end elongation EN en mode automate (s); Malvoisin 1984 II - See elongwheat parameters
+# Leaf Automate elongation
+te = 271 * 3600  #: end of leaf elongation in automate growth (s); fitted from adapted data from Fournier 2005
+tm = 176 * 3600  #: time at which leaf elongation rate is maximal in automate growth (s); fitted from adapted data from Fournier 2005
+tb = -25 * 3600  #: beginning of leaf elongation in automate growth (s); fitted from adapted data from Fournier 2005
+L0 = abs((1 + (te / (te - tm))) * (min(1.0, float(-tb) / float(te - tb))**((te - tb) / (te - tm))))  #: Leaf length at t=0 in automate growth (beta function) (m)
+FITTED_L0 = 0.01557936             #: Fitted value of leaf length at t=0 after rescaling the beta function with L0 (m); Fournier 2005 sur courbe corrigee
+OFFSET_LEAF = FITTED_L0 - L0       #: Offset used for the final fitting of the beta function (m)
+SCALING_FACTOR_LEAF = 1/FITTED_L0  #: Scaling factor of the leaf in automate growth (dimensionless)
 
+# Internode Automate elongation
+SCALING_FACTOR_INT = 59  # 5.2 #: Scaling factor of the internode in automate growth (dimensionless), Malvoisin 1984 II
+te_IN = 210 * 3600  #: end of internode elongation in automate growth; Malvoisin 1984 II
+tm_IN = 156 * 3600  #: time at which internode elongation rate is maximal in automate growth (s); Malvoisin 1984 II
+tb_IN = -70 * 3600  #: beginning of internode elongation in automate growth (s); Malvoisin 1984 II
+L0_INT = (1 + (te_IN / (te_IN - tm_IN))) * (min(1.0, float(-tb_IN) / float(te_IN - tb_IN))**((te_IN - tb_IN) / (te_IN - tm_IN)))  #: Internode length at t=0 in automate growth (beta function) (m)
+OFFSET_INT = 1 / SCALING_FACTOR_INT - L0_INT
 
 # Roots
 VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry matter growth (µmol C s-1 g-1 MS)

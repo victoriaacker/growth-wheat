@@ -26,7 +26,7 @@ import parameters
 
 
 def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L):
-    """ Relation between length and mstruct for the leaf segment located in the hidden zone.
+    """ Relation between length and mstruct for the leaf segment located in the hidden zone during the exponential-like growth phase.
     Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1975) and expressed in g of dry mass. #TODO : Check the ref (Williams 1960?)
     Parameter RATIO_MSTRUCT_DM is then used to convert in g of structural dry mass.
 
@@ -40,25 +40,33 @@ def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L):
     """
     return parameters.ALPHA * parameters.BETA * leaf_L**(parameters.BETA-1) * delta_leaf_L * parameters.RATIO_MSTRUCT_DM
 
-
-def calculate_delta_leaf_enclosed_mstruct_postE(leaf_pseudostem_L, delta_leaf_pseudostem_L, mstruct, LSSW, leaf_pseudo_age, delta_t):
-    """ Relation between length and mstruct for the leaf segment located in the hidden zone after leaf emergence.
-    Increase mstruct to match sheath mstruct calculation when it is mature.
+def calculate_delta_leaf_enclosed_mstruct_postE(leaf_pseudo_age, leaf_pseudostem_L, LSSW, mstruct):
+    """ mstruct of the enclosed leaf from the emergence of the previous leaf to the end of elongation (automate function depending on leaf pseudo age and final mstruct).
+    Final mstruct of the enclosed leaf matches sheath mstruct calculation when it is mature.
     #TODO : Hiddenzone mstruct calculation will not work for sheath sorten than previous one.
 
     :Parameters:
-        - `leaf_L` (:class:`float`) - Total leaf length (m)
-        - `delta_leaf_L` (:class:`float`) - delta of leaf length (m)
+        - `leaf_pseudo_age` (:class:`float`) - Pseudo age of the leaf since beginning of automate elongation (s)
+        - 'leaf_pseudostem_L' (:class:`float`) Pseudostem length (m)
+        - `LSSW` (:class:`float`) - Lineic Structural Sheath Weight (g m-1).
+        - `mstruct` (:class:`float`) - current mstruct of the enclosed part of the leaf (g)
     :Returns:
         delta_leaf_enclosed_mstruct (g)
     :Returns Type:
         :class:`float`
     """
-    #increment_mstruct = (leaf_pseudostem_L * LSSW - mstruct)/(parameters.te - leaf_pseudo_age)
-    increment_mstruct = (delta_leaf_pseudostem_L * LSSW) / (parameters.te - leaf_pseudo_age)
 
-    return increment_mstruct * delta_t
+    enclosed_mstruct_max = leaf_pseudostem_L * LSSW
+    if leaf_pseudo_age <= parameters.tb:
+        enclosed_mstruct = parameters.FITTED_L0 * enclosed_mstruct_max
+    elif leaf_pseudo_age < parameters.te:
+        enclosed_mstruct = min(enclosed_mstruct_max, enclosed_mstruct_max * (abs((1 + (max(0, (parameters.te - leaf_pseudo_age)) / (parameters.te - parameters.tm)))
+                                                 * (min(1.0, float(leaf_pseudo_age - parameters.tb) / float(parameters.te - parameters.tb)) **
+                                                    ((parameters.te - parameters.tb) / (parameters.te - parameters.tm)))) + parameters.OFFSET_LEAF))
+    else:
+        enclosed_mstruct = enclosed_mstruct_max
 
+    return enclosed_mstruct - mstruct
 
 def calculate_delta_internode_enclosed_mstruct(internode_L, delta_internode_L):
     """ Relation between length and mstruct for the internode segment located in the hidden zone.
@@ -74,23 +82,49 @@ def calculate_delta_internode_enclosed_mstruct(internode_L, delta_internode_L):
     :Returns Type:
         :class:`float`
     """
+    # TODO: internode mstruct should increase to meet internode_L * LINW at the end of its elongation(like leaf). However, since an internode might never emerge, its mstruct should increase from the end of its exponential-like phase.
 
     return parameters.RATIO_ENCLOSED_LEAF_INTERNODE * parameters.ALPHA * parameters.BETA * internode_L**(parameters.BETA-1) * delta_internode_L * parameters.RATIO_MSTRUCT_DM
 
+def calculate_delta_internode_enclosed_mstruct_postL(internode_pseudo_age, internode_pseudostem_L,LSIW, mstruct ):
+    """ mstruct of the enclosed internode from the ligulation of the previous leaf to the end of elongation (automate function depending on internode pseudo age and final mstruct).
+    Final mstruct of the enclosed internode matches internode mstruct calculation when it is mature.
 
-def calculate_delta_emerged_tissue_mstruct(SSW, previous_mstruct, area):
+    :Parameters:
+        - `internode_pseudo_age` (:class:`float`) - Pseudo age of the internode since beginning of automate elongation (s)
+        - 'internode_pseudostem_L' (:class:`float`) Pseudostem length of the internode (m)
+        - `LSIW` (:class:`float`) - Lineic Structural Internode Weight (g m-1).
+        - `mstruct` (:class:`float`) - current mstruct of the enclosed part of the internode (g)
+    :Returns:
+        delta_internode_enclosed_mstruct (g)
+    :Returns Type:
+        :class:`float`
+    """
+    enclosed_mstruct_max = internode_pseudostem_L * LSIW
+    if internode_pseudo_age <= parameters.tb_IN:
+        enclosed_mstruct = (1 / parameters.SCALING_FACTOR_INT) * enclosed_mstruct_max
+    elif internode_pseudo_age < parameters.te_IN:
+        enclosed_mstruct = min(enclosed_mstruct_max, enclosed_mstruct_max * (abs((1 + (max(0, (parameters.te_IN - internode_pseudo_age)) / (parameters.te_IN - parameters.tm_IN))) *
+                                                                (min(1.0, float(internode_pseudo_age - parameters.tb_IN) /
+                                                                     float(parameters.te_IN - parameters.tb_IN)) ** ((parameters.te_IN - parameters.tb_IN) /
+                                                                                                                     (parameters.te_IN - parameters.tm_IN)))) + parameters.OFFSET_INT))
+    else:
+        enclosed_mstruct = enclosed_mstruct_max
+    return enclosed_mstruct - mstruct
+
+def calculate_delta_emerged_tissue_mstruct(SW, previous_mstruct, metric):
     """ delta mstruct of emerged tissue (lamina, sheath and internode). Calculated from tissue area.
 
     :Parameters:
-        - `SSW` (:class:`float`) - Structural Specific Weight (g m-2)
+        - `SW` (:class:`float`) - For Lamina : Structural Specific Weight (g m-2); For sheath and internode : Lineic Structural Weight (g m-1)
         - `previous_mstruct` (:class:`float`) - mstruct at the previous time step i.e. not yet updated (g)
-        - `area` (:class:`float`) - Area at the current time step, as updated by the geometrical model (m2)
+        - `metric` (:class:`float`) - For Lamina : Area at the current time step, as updated by the geometrical model (m2); For sheath and internode : Length at the current time step (m)
     :Returns:
         delta mstruct (g)
     :Returns Type:
         :class:`float`
     """
-    updated_mstruct = SSW * area
+    updated_mstruct = SW * metric
     delta_mstruct = updated_mstruct - previous_mstruct
     return delta_mstruct
 

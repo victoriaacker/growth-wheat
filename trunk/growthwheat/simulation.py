@@ -29,9 +29,9 @@ from respiwheat.model import RespirationModel
 
 
 #: the inputs needed by GrowthWheat
-HIDDENZONE_INPUTS = ['leaf_is_growing', 'internode_is_growing', 'leaf_L', 'delta_leaf_L', 'internode_L', 'delta_internode_L', 'leaf_pseudostem_length', 'delta_leaf_pseudostem_length',
-                     'internode_distance_to_emerge', 'delta_internode_distance_to_emerge', 'SSLW', 'LSSW', 'LSIW', 'leaf_is_emerged', 'internode_is_visible', 'leaf_pseudo_age',
-                     'internode_pseudo_age', 'sucrose', 'amino_acids', 'fructan', 'proteins', 'leaf_enclosed_mstruct', 'leaf_enclosed_Nstruct', 'internode_enclosed_mstruct',
+HIDDENZONE_INPUTS = ['leaf_is_growing', 'internode_is_growing','leaf_pseudo_age','internode_pseudo_age', 'leaf_L', 'delta_leaf_L', 'internode_L', 'delta_internode_L', 'leaf_pseudostem_length',
+                     'delta_leaf_pseudostem_length', 'internode_distance_to_emerge', 'delta_internode_distance_to_emerge', 'SSLW', 'LSSW', 'LSIW', 'leaf_is_emerged', 'internode_is_visible',
+                     'leaf_pseudo_age', 'internode_pseudo_age', 'sucrose', 'amino_acids', 'fructan', 'proteins', 'leaf_enclosed_mstruct', 'leaf_enclosed_Nstruct', 'internode_enclosed_mstruct',
                      'internode_enclosed_Nstruct', 'mstruct']
 ELEMENT_INPUTS = ['is_growing', 'mstruct', 'green_area', 'length', 'sucrose', 'amino_acids', 'fructan', 'proteins', 'Nstruct']
 ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
@@ -122,18 +122,21 @@ class Simulation(object):
 
             # Delta Growth internode
 
-            if not hiddenzone_inputs['internode_is_visible']:  #: Internode is not visible
+            if not hiddenzone_inputs['LSIW'] > 0:  #: Internode is in exponential-like growth phase
                 # delta mstruct of the internode
                 delta_internode_enclosed_mstruct = model.calculate_delta_internode_enclosed_mstruct(hiddenzone_inputs['internode_L'], hiddenzone_inputs['delta_internode_L'])
                 # delta Nstruct of the internode
                 delta_internode_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_internode_enclosed_mstruct)
-            else:  #: Internode is visible
+            else :
                 # delta mstruct of the enclosed internode
-                delta_internode_enclosed_mstruct = model.calculate_delta_internode_enclosed_mstruct(hiddenzone_inputs['internode_distance_to_emerge'],
-                                                                                                    hiddenzone_inputs['delta_internode_distance_to_emerge'])
+                delta_internode_enclosed_mstruct = model.calculate_delta_internode_enclosed_mstruct_postL(hiddenzone_inputs['internode_pseudo_age'],
+                                                                                                    hiddenzone_inputs['internode_distance_to_emerge'],
+                                                                                                    hiddenzone_inputs['LSIW'],
+                                                                                                    hiddenzone_inputs['internode_enclosed_mstruct'])
                 # delta Nstruct of the enclosed internode
                 delta_internode_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_internode_enclosed_mstruct)
 
+            if hiddenzone_inputs['internode_is_visible']:  #: Internode is visible
                 visible_internode_id = hiddenzone_id + tuple(['internode', 'StemElement'])
                 curr_visible_internode_inputs = all_elements_inputs[visible_internode_id]
                 curr_visible_internode_outputs = all_elements_outputs[visible_internode_id]
@@ -154,23 +157,21 @@ class Simulation(object):
                 self.outputs['elements'][visible_internode_id] = curr_visible_internode_outputs
 
             # Delta Growth leaf
-            if not hiddenzone_inputs['leaf_is_emerged']:  #: leaf has not emerged
+            if not hiddenzone_inputs['LSSW'] > 0:  #: Leaf is in exponential-like growth phase
                 # delta mstruct of the hidden leaf
                 delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct(hiddenzone_inputs['leaf_L'], hiddenzone_inputs['delta_leaf_L'])
                 # delta Nstruct of the hidden leaf
                 delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
-
-            elif hiddenzone_inputs['leaf_is_emerged'] and hiddenzone_inputs['leaf_is_growing']:  #: leaf has emerged and still growing
+            elif hiddenzone_inputs['LSSW'] > 0 and hiddenzone_inputs['leaf_is_growing']: #: Leaf is in automate growth phase
                 # delta mstruct of the enclosed leaf (which length is assumed to equal the length of the pseudostem)
-                delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct_postE(hiddenzone_inputs['leaf_pseudostem_length'],
-                                                                                                hiddenzone_inputs['delta_leaf_pseudostem_length'],
-                                                                                                hiddenzone_inputs['mstruct'],
+                delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct_postE(hiddenzone_inputs['leaf_pseudo_age'],
+                                                                                                hiddenzone_inputs['leaf_pseudostem_length'],
                                                                                                 hiddenzone_inputs['LSSW'],
-                                                                                                hiddenzone_inputs['leaf_pseudo_age'],
-                                                                                                self.delta_t)
+                                                                                                hiddenzone_inputs['leaf_enclosed_mstruct'])
                 # delta Nstruct of the enclosed en leaf
                 delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
 
+            if hiddenzone_inputs['leaf_is_emerged'] and hiddenzone_inputs['leaf_is_growing']:  #: leaf has emerged and still growing
                 visible_lamina_id = hiddenzone_id + tuple(['blade', 'LeafElement1'])
                 #: Lamina is growing
                 if all_elements_inputs[visible_lamina_id]['is_growing']:
