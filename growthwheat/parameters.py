@@ -30,31 +30,22 @@ ALPHA = 0.106  # 1.537e-02            #: Parameter of the relation between leaf 
 BETA = 1.28                           #: Parameter of the relation between leaf mass and leaf length (dimensionless)
 RATIO_SUCROSE_MSTRUCT = 0.384         #: Mass of C (under carbohydrate form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
 RATIO_AMINO_ACIDS_MSTRUCT = 0.005     #: Mass of N (under amino acid/protein form, g) in 1 g of mstruct (Penning de Vries, Witlage and Kremer, 1978)
-AMINO_ACIDS_C_RATIO = 3.67            #: Mean number of mol of C in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
-AMINO_ACIDS_N_RATIO = 1.17            #: Mean number of mol of N in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly)
+AMINO_ACIDS_C_RATIO = 3.67            #: Mean number of mol of C in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly) # Sources ?? Calculs AS = 4.15
+AMINO_ACIDS_N_RATIO = 1.17            #: Mean number of mol of N in 1 mol of the major amino acids of plants (Glu, Gln, Ser, Asp, Ala, Gly) # Sources ?? Calculs AS = 1.25
 RATIO_MSTRUCT_DM = 0.8                #: Ratio mstruct/dry matter (dimensionless)
 RATIO_ENCLOSED_LEAF_INTERNODE = 5     #: We use ratio sheath:lamina of the specific structural dry masses (from data of J. Bertheloot, 2004)
 
 # Leaf Automate elongation
-te = 271 * 3600  #: end of leaf elongation in automate growth (s); fitted from adapted data from Fournier 2005
-tm = 176 * 3600  #: time at which leaf elongation rate is maximal in automate growth (s); fitted from adapted data from Fournier 2005
-tb = -25 * 3600  #: beginning of leaf elongation in automate growth (s); fitted from adapted data from Fournier 2005
-L0 = abs((1 + (te / (te - tm))) * (min(1.0, float(-tb) / float(te - tb))**((te - tb) / (te - tm))))  #: Leaf length at t=0 in automate growth (beta function) (m)
+te = 300 * 3600 * 24 / 12  #: end of leaf elongation in automate growth (s at 12°c); fitted from adapted data from Fournier 2005
 FITTED_L0 = 0.01557936             #: Fitted value of leaf length at t=0 after rescaling the beta function with L0 (m); Fournier 2005 sur courbe corrigee
-OFFSET_LEAF = FITTED_L0 - L0       #: Offset used for the final fitting of the beta function (m)
-SCALING_FACTOR_LEAF = 1/FITTED_L0  #: Scaling factor of the leaf in automate growth (dimensionless)
 
 # Internode Automate elongation
-SCALING_FACTOR_INT = 59  # 5.2 #: Scaling factor of the internode in automate growth (dimensionless), Malvoisin 1984 II
-te_IN = 210 * 3600  #: end of internode elongation in automate growth; Malvoisin 1984 II
-tm_IN = 156 * 3600  #: time at which internode elongation rate is maximal in automate growth (s); Malvoisin 1984 II
-tb_IN = -70 * 3600  #: beginning of internode elongation in automate growth (s); Malvoisin 1984 II
-L0_INT = (1 + (te_IN / (te_IN - tm_IN))) * (min(1.0, float(-tb_IN) / float(te_IN - tb_IN))**((te_IN - tb_IN) / (te_IN - tm_IN)))  #: Internode length at t=0 in automate growth (beta function) (m)
-OFFSET_INT = 1 / SCALING_FACTOR_INT - L0_INT
+FITTED_L0_IN = 1/59.0  # 5.2 #: Scaling factor of the internode in automate growth (dimensionless), fitted from Malvoisin 1984 II
+te_IN = 210 * 3600 * 24 / 12  #: end of internode elongation in automate growth (s at 12°c) ; fitted from Malvoisin 1984 II
 
 # Roots
-VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry matter growth (µmol C s-1 g-1 MS)
-K_ROOTS_GROWTH = 1250                 #: Affinity coefficient of root structural dry matter growth (µmol C g-1 MS)
+VMAX_ROOTS_GROWTH = 0.015             #: Maximal rate of root structural dry matter growth (µmol C s-1 g-1 MS) post flo
+K_ROOTS_GROWTH = 1250                 #: Affinity coefficient of root structural dry matter growth (µmol C g-1 MS) post flo
 RATIO_C_MSTRUCT_ROOTS = 0.384         #: Mean contribution of carbon to root structural dry mass (g C g-1 Mstruct)
 RATIO_N_MSTRUCT_ROOTS_ = 0.02         #: Mean contribution of nitrogen to root structural dry mass (g N g-1 Mstruct)
 
@@ -109,3 +100,5 @@ class OrganInit:
         self.proteins = 0             #: µmol N
         self.mstruct = 0              #: g
         self.Nstruct = 0              #: g
+        self.cytokinins = 0  #: g
+        self.conc_cytokinins = 60.0  #: AU / g mstruct
