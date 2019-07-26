@@ -14,8 +14,8 @@ Prerequisites
     * Respi-Wheat, https://sourcesup.renater.fr/projects/respi-wheat/ (or send an email to respi-wheat-request@groupes.renater.fr)
 * To build the documentation: Sphinx >= 1.1.3, http://sphinx-doc.org/
 * To run the tests: 
-	* Nose >= 1.3.0, http://nose.readthedocs.org/
-	* NumPy >= 1.11.0, http://www.numpy.org/
+    * Nose >= 1.3.0, http://nose.readthedocs.org/
+    * NumPy >= 1.11.0, http://www.numpy.org/
 * To get code coverage testing: Coverage >= 3.6b3, http://nedbatchelder.com/code/coverage/
 
 
@@ -59,6 +59,6 @@ Contributing
 ============
 
 #. Check for open issues or open a fresh issue to start a discussion around a
-   feature idea or a bug: XXX
+   feature idea or a bug: https://sourcesup.renater.fr/forum/?group_id=2213
 #. If you feel uncomfortable or uncertain about an issue or your changes, feel
    free to email growth-wheat@groupes.renater.fr.
