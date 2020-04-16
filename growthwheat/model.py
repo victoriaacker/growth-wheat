@@ -1,8 +1,9 @@
 # -*- coding: latin-1 -*-
 
 from __future__ import division  # use "//" to do integer division
-import parameters
+
 import numpy as np
+import parameters
 
 """
     growthwheat.model
@@ -13,15 +14,6 @@ import numpy as np
     :copyright: Copyright 2014-2015 INRA-ECOSYS, see AUTHORS.
     :license: see LICENSE for details.
 
-"""
-
-"""
-    Information about this versioned file:
-        $LastChangedBy$
-        $LastChangedDate$
-        $LastChangedRevision$
-        $URL$
-        $Id$
 """
 
 
@@ -130,7 +122,7 @@ def calculate_delta_internode_enclosed_mstruct_postL(delta_internode_pseudo_age,
     else:
         delta_enclosed_mstruct = 0
 
-    return max(0.,delta_enclosed_mstruct)
+    return max(0., delta_enclosed_mstruct)
 
 
 def calculate_delta_emerged_tissue_mstruct(SW, previous_mstruct, metric):
@@ -145,7 +137,7 @@ def calculate_delta_emerged_tissue_mstruct(SW, previous_mstruct, metric):
     """
     updated_mstruct = SW * metric
     delta_mstruct = updated_mstruct - previous_mstruct
-    return max(0.,delta_mstruct)
+    return max(0., delta_mstruct)
 
 
 def calculate_delta_Nstruct(delta_mstruct):
@@ -209,10 +201,12 @@ def calculate_s_mstruct_sucrose(delta_hiddenzone_mstruct, delta_lamina_mstruct, 
     """
     s_Nstruct_amino_acids = s_Nstruct_amino_acids_N / parameters.AMINO_ACIDS_N_RATIO  #: µmol of AA
     s_mstruct_amino_acids_C = s_Nstruct_amino_acids * parameters.AMINO_ACIDS_C_RATIO  #: µmol of C coming from AA
-    s_mstruct_C = (delta_hiddenzone_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_SUCROSE_MSTRUCT / parameters.C_MOLAR_MASS * 1E6  #: Total C used for mstruct growth (µmol C)
+    s_mstruct_C = (
+                              delta_hiddenzone_mstruct + delta_lamina_mstruct + delta_sheath_mstruct) * parameters.RATIO_SUCROSE_MSTRUCT / parameters.C_MOLAR_MASS * 1E6  #: Total C used for mstruct growth (µmol C)
     s_mstruct_sucrose_C = s_mstruct_C - s_mstruct_amino_acids_C  #: µmol of C coming from sucrose
 
     return s_mstruct_sucrose_C
+
 
 def calculate_sheath_mstruct(sheath_L, LSSW):
     """ mstruct of the sheath.
@@ -225,6 +219,7 @@ def calculate_sheath_mstruct(sheath_L, LSSW):
       :rtype: float
       """
     return sheath_L * LSSW
+
 
 # Roots
 def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_teq, postflowering_stages):

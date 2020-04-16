@@ -6,7 +6,6 @@ import copy
 
 import model
 import parameters
-
 from respiwheat.model import RespirationModel
 
 """
@@ -20,15 +19,6 @@ from respiwheat.model import RespirationModel
 
 """
 
-"""
-    Information about this versioned file:
-        $LastChangedBy$
-        $LastChangedDate$
-        $LastChangedRevision$
-        $URL$
-        $Id$
-"""
-
 #: the inputs needed by GrowthWheat
 HIDDENZONE_INPUTS = ['leaf_is_growing', 'internode_is_growing', 'leaf_pseudo_age', 'delta_leaf_pseudo_age', 'internode_pseudo_age', 'delta_internode_pseudo_age', 'leaf_L', 'delta_leaf_L',
                      'internode_L',
@@ -36,7 +26,7 @@ HIDDENZONE_INPUTS = ['leaf_is_growing', 'internode_is_growing', 'leaf_pseudo_age
                      'leaf_pseudostem_length',
                      'delta_leaf_pseudostem_length', 'internode_distance_to_emerge', 'delta_internode_distance_to_emerge', 'SSLW', 'LSSW', 'LSIW', 'leaf_is_emerged', 'internode_is_visible',
                      'sucrose', 'amino_acids', 'fructan', 'proteins', 'leaf_enclosed_mstruct', 'leaf_enclosed_Nstruct', 'internode_enclosed_mstruct',
-                     'internode_enclosed_Nstruct', 'mstruct', 'internode_Lmax', 'leaf_Lmax', 'sheath_Lmax' , 'is_over', 'leaf_is_remobilizing', 'internode_is_remobilizing']
+                     'internode_enclosed_Nstruct', 'mstruct', 'internode_Lmax', 'leaf_Lmax', 'sheath_Lmax', 'is_over', 'leaf_is_remobilizing', 'internode_is_remobilizing']
 ELEMENT_INPUTS = ['is_growing', 'mstruct', 'green_area', 'length', 'sucrose', 'amino_acids', 'fructan', 'proteins', 'cytokinins', 'Nstruct']
 ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
 SAM_INPUTS = ['delta_teq', 'delta_teq_roots']
@@ -141,8 +131,8 @@ class Simulation(object):
             #: Main stem
             else:
                 # Initialisation of the exports towards the growing lamina or sheath
-                delta_leaf_enclosed_mstruct = delta_leaf_enclosed_Nstruct =  delta_lamina_mstruct =  delta_sheath_mstruct =  delta_lamina_Nstruct =  delta_sheath_Nstruct =  leaf_export_sucrose =  \
-                leaf_export_amino_acids =  leaf_remob_fructan =  leaf_export_proteins =  internode_export_sucrose =  internode_export_amino_acids =  internode_remob_fructan =  internode_export_proteins = 0.
+                delta_leaf_enclosed_mstruct = delta_leaf_enclosed_Nstruct = delta_lamina_mstruct = delta_sheath_mstruct = delta_lamina_Nstruct = delta_sheath_Nstruct = leaf_export_sucrose = \
+                    leaf_export_amino_acids = leaf_remob_fructan = leaf_export_proteins = internode_export_sucrose = internode_export_amino_acids = internode_remob_fructan = internode_export_proteins = 0.
 
                 # -- Delta Growth internode
 
@@ -268,7 +258,8 @@ class Simulation(object):
                                                                                                           delta_sheath_Nstruct)  #: Consumption of amino acids due to mstruct growth (µmol N)
                 curr_hiddenzone_outputs['sucrose_consumption_mstruct'] = model.calculate_s_mstruct_sucrose((delta_leaf_enclosed_mstruct + delta_internode_enclosed_mstruct), delta_lamina_mstruct,
                                                                                                            delta_sheath_mstruct,
-                                                                                                           curr_hiddenzone_outputs['AA_consumption_mstruct'])  #: Consumption of sucrose due to mstruct growth (µmol C)
+                                                                                                           curr_hiddenzone_outputs[
+                                                                                                               'AA_consumption_mstruct'])  #: Consumption of sucrose due to mstruct growth (µmol C)
                 curr_hiddenzone_outputs['Respi_growth'] = RespirationModel.R_growth(curr_hiddenzone_outputs['sucrose_consumption_mstruct'])  #: Respiration growth (µµmol C)
 
                 # -- Update of hiddenzone outputs
@@ -278,7 +269,8 @@ class Simulation(object):
                 curr_hiddenzone_outputs['internode_enclosed_Nstruct'] += delta_internode_enclosed_Nstruct
                 curr_hiddenzone_outputs['mstruct'] = curr_hiddenzone_outputs['leaf_enclosed_mstruct'] + curr_hiddenzone_outputs['internode_enclosed_mstruct']
                 curr_hiddenzone_outputs['Nstruct'] = curr_hiddenzone_outputs['leaf_enclosed_Nstruct'] + curr_hiddenzone_outputs['internode_enclosed_Nstruct']
-                curr_hiddenzone_outputs['sucrose'] -= (curr_hiddenzone_outputs['sucrose_consumption_mstruct'] + curr_hiddenzone_outputs['Respi_growth'] + leaf_export_sucrose + internode_export_sucrose)
+                curr_hiddenzone_outputs['sucrose'] -= (
+                            curr_hiddenzone_outputs['sucrose_consumption_mstruct'] + curr_hiddenzone_outputs['Respi_growth'] + leaf_export_sucrose + internode_export_sucrose)
                 curr_hiddenzone_outputs['fructan'] -= (leaf_remob_fructan + internode_remob_fructan)
                 curr_hiddenzone_outputs['amino_acids'] -= (curr_hiddenzone_outputs['AA_consumption_mstruct'] + leaf_export_amino_acids + internode_export_amino_acids)
                 curr_hiddenzone_outputs['proteins'] -= (leaf_export_proteins + internode_export_proteins)
@@ -290,7 +282,7 @@ class Simulation(object):
 
                     # Case when the hiddenzone contains a hidden part of lamina
                     if hiddenzone_inputs['leaf_pseudostem_length'] > hiddenzone_inputs['sheath_Lmax']:
-                        hidden_sheath_mstruct = model.calculate_sheath_mstruct(hiddenzone_inputs['sheath_Lmax'], hiddenzone_inputs['LSSW'] )
+                        hidden_sheath_mstruct = model.calculate_sheath_mstruct(hiddenzone_inputs['sheath_Lmax'], hiddenzone_inputs['LSSW'])
                         share_hidden_sheath = hidden_sheath_mstruct / curr_hiddenzone_outputs['leaf_enclosed_mstruct']
                     else:
                         share_hidden_sheath = 1
@@ -304,7 +296,7 @@ class Simulation(object):
                     curr_hidden_sheath_outputs['mstruct'] = curr_hiddenzone_outputs['leaf_enclosed_mstruct'] * share_hidden_sheath
                     curr_hidden_sheath_outputs['max_mstruct'] = curr_hiddenzone_outputs['leaf_enclosed_mstruct'] * share_hidden_sheath
                     curr_hidden_sheath_outputs['Nstruct'] = curr_hiddenzone_outputs['leaf_enclosed_Nstruct'] * share_hidden_sheath
-                    curr_hidden_sheath_outputs['sucrose'] = curr_hiddenzone_outputs['sucrose'] * share_leaf  * share_hidden_sheath
+                    curr_hidden_sheath_outputs['sucrose'] = curr_hiddenzone_outputs['sucrose'] * share_leaf * share_hidden_sheath
                     curr_hidden_sheath_outputs['amino_acids'] = curr_hiddenzone_outputs['amino_acids'] * share_leaf * share_hidden_sheath
                     curr_hidden_sheath_outputs['fructan'] = curr_hiddenzone_outputs['fructan'] * share_leaf * share_hidden_sheath
                     curr_hidden_sheath_outputs['proteins'] = curr_hiddenzone_outputs['proteins'] * share_leaf * share_hidden_sheath
@@ -339,7 +331,8 @@ class Simulation(object):
                     self.outputs['hiddenzone'][hiddenzone_id]['leaf_is_remobilizing'] = False
 
                 # -- Remobilisation at the end of internode elongation
-                if not hiddenzone_inputs['internode_is_growing'] and hiddenzone_inputs['internode_L'] > 0:  # Internodes stop to elongate after leaves. We cannot test delta_internode_L > 0 for the cases of short internodes which are mature before GA production.
+                if not hiddenzone_inputs['internode_is_growing'] and hiddenzone_inputs[
+                    'internode_L'] > 0:  # Internodes stop to elongate after leaves. We cannot test delta_internode_L > 0 for the cases of short internodes which are mature before GA production.
 
                     # Add to hidden part of the internode
                     hidden_internode_id = hiddenzone_id + tuple(['internode', 'HiddenElement'])

@@ -13,14 +13,6 @@ from __future__ import division  # use "//" to do integer division
 
 """
 
-"""
-    Information about this versioned file:
-        $LastChangedBy$
-        $LastChangedDate$
-        $LastChangedRevision$
-        $URL$
-        $Id$
-"""
 C_MOLAR_MASS = 12                     #: Carbon molar mass (g mol-1)
 N_MOLAR_MASS = 14                     #: Nitrogen molar mass (g mol-1)
 

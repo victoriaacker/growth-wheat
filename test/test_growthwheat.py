@@ -3,7 +3,6 @@ import os
 
 import numpy as np
 import pandas as pd
-
 from growthwheat import simulation, converter
 
 """
@@ -25,14 +24,6 @@ from growthwheat import simulation, converter
 
 """
 
-"""
-    Information about this versioned file:
-        $LastChangedBy$
-        $LastChangedDate$
-        $LastChangedRevision$
-        $URL$
-        $Id$
-"""
 # inputs directory path
 INPUTS_DIRPATH = 'inputs'
 

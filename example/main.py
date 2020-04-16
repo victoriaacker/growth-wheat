@@ -2,7 +2,6 @@
 import os
 
 import pandas as pd
-
 from growthwheat import simulation, converter
 
 """
@@ -21,16 +20,6 @@ from growthwheat import simulation, converter
     :license: see LICENSE for details.
 
 """
-
-"""
-    Information about this versioned file:
-        $LastChangedBy$
-        $LastChangedDate$
-        $LastChangedRevision$
-        $URL$
-        $Id$
-"""
-
 
 INPUTS_DIRPATH = 'inputs'
 
@@ -55,7 +44,6 @@ SAM_inputs_t0 = pd.read_csv(SAM_INPUTS_FILEPATH)
 OUTPUTS_PRECISION = 6
 
 if __name__ == '__main__':
-
     # Create population
     simulation_ = simulation.Simulation(delta_t=3600)
     # convert the dataframe to simulation inputs format

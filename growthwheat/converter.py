@@ -1,8 +1,8 @@
 # -*- coding: latin-1 -*-
 
 from __future__ import division  # use "//" to do integer division
-import pandas as pd
 
+import pandas as pd
 import simulation
 
 """
@@ -15,15 +15,6 @@ import simulation
     :copyright: Copyright 2014-2016 INRA-ECOSYS, see AUTHORS.
     :license: see LICENSE for details.
 
-"""
-
-"""
-    Information about this versioned file:
-        $LastChangedBy$
-        $LastChangedDate$
-        $LastChangedRevision$
-        $URL$
-        $Id$
 """
 
 #: the columns which define the topology in the input/output dataframe
