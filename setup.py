@@ -30,9 +30,6 @@ if sys.version_info < (2, 7):
     print('ERROR: Growth-Wheat requires at least Python 2.7 to run.')
     sys.exit(1)
 
-if sys.version_info >= (3, 0):
-    print('WARNING: Growth-Wheat has not been tested with Python 3.')
-
 setup(
     name="Growth-Wheat",
     version=growthwheat.__version__,
