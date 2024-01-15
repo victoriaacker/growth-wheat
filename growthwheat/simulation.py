@@ -22,7 +22,7 @@ from respiwheat.model import RespirationModel
 
 #: the inputs needed by GrowthWheat
 HIDDENZONE_INPUTS = ['leaf_is_growing', 'internode_is_growing', 'leaf_pseudo_age', 'delta_leaf_pseudo_age', 'internode_pseudo_age', 'delta_internode_pseudo_age', 'leaf_L', 'delta_leaf_L',
-                     'internode_L', 'delta_internode_L', 'leaf_pseudostem_length',
+                     'internode_L', 'delta_internode_L', 'leaf_pseudostem_length', 'init_leaf_L',
                      'delta_leaf_pseudostem_length', 'internode_distance_to_emerge', 'delta_internode_distance_to_emerge', 'SSLW', 'LSSW', 'LSIW', 'leaf_is_emerged', 'internode_is_visible',
                      'sucrose', 'amino_acids', 'fructan', 'proteins', 'leaf_enclosed_mstruct', 'leaf_enclosed_Nstruct', 'internode_enclosed_mstruct',
                      'internode_enclosed_Nstruct', 'mstruct', 'internode_Lmax', 'leaf_Lmax', 'sheath_Lmax', 'is_over', 'leaf_is_remobilizing', 'internode_is_remobilizing']
@@ -189,7 +189,7 @@ class Simulation(object):
                     # delta mstruct of the hidden leaf
                     ratio_mstruct_DM = model.calculate_ratio_mstruct_DM(hiddenzone_inputs['mstruct'], hiddenzone_inputs['sucrose'], hiddenzone_inputs['fructan'],
                                                                         hiddenzone_inputs['amino_acids'], hiddenzone_inputs['proteins'])
-                    delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct(hiddenzone_inputs['leaf_L'], hiddenzone_inputs['delta_leaf_L'], ratio_mstruct_DM)
+                    delta_leaf_enclosed_mstruct = model.calculate_delta_leaf_enclosed_mstruct(hiddenzone_inputs['leaf_L'], hiddenzone_inputs['delta_leaf_L'], ratio_mstruct_DM, hiddenzone_inputs['init_leaf_L'], hiddenzone_inputs['leaf_pseudo_age'])
                     # delta Nstruct of the hidden leaf
                     delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
                 elif hiddenzone_inputs['leaf_is_growing']:  #: Leaf has emerged and growing

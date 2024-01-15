@@ -41,8 +41,7 @@ def calculate_ratio_mstruct_DM(mstruct, sucrose, fructans, amino_acids, proteins
 
     return mstruct / dry_mass
 
-
-def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L, ratio_mstruct_DM):
+def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L, ratio_mstruct_DM, init_leaf_L, leaf_pseudo_age):
     """ Relation between length and mstruct for the leaf segment located in the hidden zone during the exponential-like growth phase.
     Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1960) and expressed in g of dry mass)
     The actual ratio_mstruct_DM is then used to convert in g of structural dry mass.
@@ -54,7 +53,20 @@ def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L, ratio_mstruct_DM
     :return: delta_leaf_enclosed_mstruct (g)
     :rtype: float
     """
-    return parameters.ALPHA * parameters.BETA * leaf_L ** (parameters.BETA - 1) * delta_leaf_L * ratio_mstruct_DM
+
+    if leaf_pseudo_age >= 0:
+
+        delta_leaf_L_update = leaf_L - init_leaf_L
+        # delta_leaf_L calculation, as equal to 0 in phase II of elongation in elong-wheat
+        # init_leaf_L : leaf length before elongation in turgor-growth
+        # leaf_L : leaf length after elongation in turgor-growth
+
+    else :
+
+        delta_leaf_L_update = delta_leaf_L
+
+    # return parameters.ALPHA * parameters.BETA * leaf_L ** (parameters.BETA - 1) * delta_leaf_L * ratio_mstruct_DM
+    return parameters.ALPHA * parameters.BETA * leaf_L ** (parameters.BETA - 1) * delta_leaf_L_update * ratio_mstruct_DM
 
 
 def calculate_delta_leaf_enclosed_mstruct_postE(delta_leaf_pseudo_age, leaf_pseudo_age, leaf_pseudostem_L, enclosed_mstruct, LSSW):
