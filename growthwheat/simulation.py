@@ -26,7 +26,6 @@ HIDDENZONE_INPUTS = ['leaf_is_growing', 'internode_is_growing', 'leaf_pseudo_age
                      'delta_leaf_pseudostem_length', 'internode_distance_to_emerge', 'delta_internode_distance_to_emerge', 'SSLW', 'LSSW', 'LSIW', 'leaf_is_emerged', 'internode_is_visible',
                      'sucrose', 'amino_acids', 'fructan', 'proteins', 'leaf_enclosed_mstruct', 'leaf_enclosed_Nstruct', 'internode_enclosed_mstruct',
                      'internode_enclosed_Nstruct', 'mstruct', 'internode_Lmax', 'is_over','leaf_is_remobilizing', 'internode_is_remobilizing']
-                    # 'internode_enclosed_Nstruct', 'mstruct', 'internode_Lmax', 'leaf_Lmax', 'sheath_Lmax', 'is_over', 'leaf_is_remobilizing', 'internode_is_remobilizing']
 ELEMENT_INPUTS = ['is_growing', 'mstruct', 'senesced_mstruct', 'green_area', 'length', 'sucrose', 'amino_acids', 'fructan', 'proteins', 'cytokinins', 'Nstruct']
 ROOT_INPUTS = ['sucrose', 'amino_acids', 'mstruct', 'Nstruct']
 AXIS_INPUTS = ['delta_teq', 'delta_teq_roots']
@@ -200,15 +199,13 @@ class Simulation(object):
                                                                                                     hiddenzone_inputs['leaf_pseudostem_length'],
                                                                                                     hiddenzone_inputs['leaf_enclosed_mstruct'],
                                                                                                     hiddenzone_inputs['LSSW'])
-
-                    # TEST 06.24
-                    # delta_leaf_enclosed_mstruct = 0
-
                     # delta Nstruct of the enclosed en leaf
                     delta_leaf_enclosed_Nstruct = model.calculate_delta_Nstruct(delta_leaf_enclosed_mstruct)
 
                     # leaf has emerged and still growing
                     visible_lamina_id = hiddenzone_id + tuple(['blade', 'LeafElement1'])
+                    visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])    #: victoria 09.2024
+
                     #: Lamina is growing
                     if all_elements_inputs[visible_lamina_id]['is_growing']:
                         curr_visible_lamina_inputs = all_elements_inputs[visible_lamina_id]
@@ -236,9 +233,10 @@ class Simulation(object):
 
                         self.outputs['elements'][visible_lamina_id] = curr_visible_lamina_outputs
 
-                    else:  #: Mature lamina, growing sheath
+                    # else:  #: Mature lamina, growing sheath
+                    if all_elements_inputs[visible_sheath_id]['is_growing']:    #: victoria 09.2024
                         # The hidden part of the sheath is only updated once, at the end of leaf elongation, by remobilisation from the hiddenzone
-                        visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])
+                        # visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])
                         curr_visible_sheath_inputs = all_elements_inputs[visible_sheath_id]
                         curr_visible_sheath_outputs = all_elements_outputs[visible_sheath_id]
                         # Delta mstruct of the emerged sheath
@@ -292,14 +290,13 @@ class Simulation(object):
                 if hiddenzone_inputs['leaf_is_remobilizing']:
                     share_leaf = curr_hiddenzone_outputs['leaf_enclosed_mstruct'] / curr_hiddenzone_outputs['mstruct']
 
-                    # # TODO: comment sans Lmax ?
-                    # # # Case when the hiddenzone contains a hidden part of lamina
+                    # Case when the hiddenzone contains a hidden part of lamina
                     # if hiddenzone_inputs['leaf_pseudostem_length'] > hiddenzone_inputs['sheath_Lmax']:
                     #     hidden_sheath_mstruct = model.calculate_sheath_mstruct(hiddenzone_inputs['sheath_Lmax'], hiddenzone_inputs['LSSW'])
                     #     share_hidden_sheath = hidden_sheath_mstruct / curr_hiddenzone_outputs['leaf_enclosed_mstruct']
                     # else:
                     #     share_hidden_sheath = 1
-                    share_hidden_sheath = 1
+                    share_hidden_sheath = 1  #: Update with turgor-growth sub-model after removing Lmax
 
                     # Add to hidden part of the sheath
                     hidden_sheath_id = hiddenzone_id + tuple(['sheath', 'HiddenElement'])

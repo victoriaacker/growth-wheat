@@ -46,7 +46,8 @@ def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L, ratio_mstruct_DM
     Parameters alpha_mass_growth and beta_mass_growth estimated from Williams (1960) and expressed in g of dry mass)
     The actual ratio_mstruct_DM is then used to convert in g of structural dry mass.
 
-    :param float leaf_L: Total leaf length (m)
+    :param float init_leaf_L: Total leaf length before update in turgor-growth sub-model (m)
+    :param float leaf_L: Total leaf length after update in turgor-growth sub-model (m)
     :param float delta_leaf_L: delta of leaf length (m)
     :param float ratio_mstruct_DM: Ratio mstruct/dry matter (dimensionless)
 
@@ -55,17 +56,10 @@ def calculate_delta_leaf_enclosed_mstruct(leaf_L, delta_leaf_L, ratio_mstruct_DM
     """
 
     if leaf_pseudo_age >= 0:
-
         delta_leaf_L_update = leaf_L - init_leaf_L
-        # delta_leaf_L calculation, as equal to 0 in phase II of elongation in elong-wheat
-        # init_leaf_L : leaf length before elongation in turgor-growth
-        # leaf_L : leaf length after elongation in turgor-growth
-
-    else :
-
+    else:
         delta_leaf_L_update = delta_leaf_L
 
-    # return parameters.ALPHA * parameters.BETA * leaf_L ** (parameters.BETA - 1) * delta_leaf_L * ratio_mstruct_DM
     return parameters.ALPHA * parameters.BETA * leaf_L ** (parameters.BETA - 1) * delta_leaf_L_update * ratio_mstruct_DM
 
 
