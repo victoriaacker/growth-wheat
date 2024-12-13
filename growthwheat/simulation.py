@@ -204,7 +204,7 @@ class Simulation(object):
 
                     # leaf has emerged and still growing
                     visible_lamina_id = hiddenzone_id + tuple(['blade', 'LeafElement1'])
-                    visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])    #: victoria 09.2024
+                    # visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])    #: victoria 09.2024
 
                     #: Lamina is growing
                     if all_elements_inputs[visible_lamina_id]['is_growing']:
@@ -233,32 +233,32 @@ class Simulation(object):
 
                         self.outputs['elements'][visible_lamina_id] = curr_visible_lamina_outputs
 
-                    # else:  #: Mature lamina, growing sheath
-                    if all_elements_inputs[visible_sheath_id]['is_growing']:    #: victoria 09.2024
-                        # The hidden part of the sheath is only updated once, at the end of leaf elongation, by remobilisation from the hiddenzone
-                        # visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])
-                        curr_visible_sheath_inputs = all_elements_inputs[visible_sheath_id]
-                        curr_visible_sheath_outputs = all_elements_outputs[visible_sheath_id]
-                        # Delta mstruct of the emerged sheath
-                        delta_sheath_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['LSSW'], curr_visible_sheath_inputs['mstruct'], curr_visible_sheath_inputs['length'])
-                        # Delta Nstruct of the emerged sheath
-                        delta_sheath_Nstruct = model.calculate_delta_Nstruct(delta_sheath_mstruct)
-                        # Export of metabolite from hiddenzone towards emerged sheath
-                        leaf_export_sucrose = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
-                        leaf_export_amino_acids = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
-                        leaf_remob_fructan = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['fructan'], hiddenzone_inputs['mstruct'])
-                        leaf_export_proteins = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['proteins'], hiddenzone_inputs['mstruct'])
-                        addition_cytokinins = model.calculate_init_cytokinins_emerged_tissue(delta_sheath_mstruct)
-
-                        # Update of sheath outputs
-                        curr_visible_sheath_outputs['mstruct'] += delta_sheath_mstruct
-                        curr_visible_sheath_outputs['max_mstruct'] = curr_visible_sheath_outputs['mstruct']
-                        curr_visible_sheath_outputs['Nstruct'] += delta_sheath_Nstruct
-                        curr_visible_sheath_outputs['sucrose'] += leaf_export_sucrose + leaf_remob_fructan
-                        curr_visible_sheath_outputs['amino_acids'] += leaf_export_amino_acids
-                        curr_visible_sheath_outputs['proteins'] += leaf_export_proteins
-                        curr_visible_sheath_outputs['cytokinins'] += addition_cytokinins
-                        self.outputs['elements'][visible_sheath_id] = curr_visible_sheath_outputs
+                    # # else:  #: Mature lamina, growing sheath
+                    # if all_elements_inputs[visible_sheath_id]['is_growing']:    #: victoria 09.2024
+                    #     # The hidden part of the sheath is only updated once, at the end of leaf elongation, by remobilisation from the hiddenzone
+                    #     # visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])
+                    #     curr_visible_sheath_inputs = all_elements_inputs[visible_sheath_id]
+                    #     curr_visible_sheath_outputs = all_elements_outputs[visible_sheath_id]
+                    #     # Delta mstruct of the emerged sheath
+                    #     delta_sheath_mstruct = model.calculate_delta_emerged_tissue_mstruct(hiddenzone_inputs['LSSW'], curr_visible_sheath_inputs['mstruct'], curr_visible_sheath_inputs['length'])
+                    #     # Delta Nstruct of the emerged sheath
+                    #     delta_sheath_Nstruct = model.calculate_delta_Nstruct(delta_sheath_mstruct)
+                    #     # Export of metabolite from hiddenzone towards emerged sheath
+                    #     leaf_export_sucrose = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['sucrose'], hiddenzone_inputs['mstruct'])
+                    #     leaf_export_amino_acids = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['amino_acids'], hiddenzone_inputs['mstruct'])
+                    #     leaf_remob_fructan = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['fructan'], hiddenzone_inputs['mstruct'])
+                    #     leaf_export_proteins = model.calculate_export(delta_sheath_mstruct, hiddenzone_inputs['proteins'], hiddenzone_inputs['mstruct'])
+                    #     addition_cytokinins = model.calculate_init_cytokinins_emerged_tissue(delta_sheath_mstruct)
+                    #
+                    #     # Update of sheath outputs
+                    #     curr_visible_sheath_outputs['mstruct'] += delta_sheath_mstruct
+                    #     curr_visible_sheath_outputs['max_mstruct'] = curr_visible_sheath_outputs['mstruct']
+                    #     curr_visible_sheath_outputs['Nstruct'] += delta_sheath_Nstruct
+                    #     curr_visible_sheath_outputs['sucrose'] += leaf_export_sucrose + leaf_remob_fructan
+                    #     curr_visible_sheath_outputs['amino_acids'] += leaf_export_amino_acids
+                    #     curr_visible_sheath_outputs['proteins'] += leaf_export_proteins
+                    #     curr_visible_sheath_outputs['cytokinins'] += addition_cytokinins
+                    #     self.outputs['elements'][visible_sheath_id] = curr_visible_sheath_outputs
 
                 # -- CN consumption due to mstruct/Nstruct growth of the enclosed leaf and of the internode
                 curr_hiddenzone_outputs['AA_consumption_mstruct'] = model.calculate_s_Nstruct_amino_acids((delta_leaf_enclosed_Nstruct + delta_internode_enclosed_Nstruct),
@@ -311,7 +311,43 @@ class Simulation(object):
                     curr_hidden_sheath_outputs['amino_acids'] = curr_hiddenzone_outputs['amino_acids'] * share_leaf * share_hidden_sheath
                     curr_hidden_sheath_outputs['fructan'] = curr_hiddenzone_outputs['fructan'] * share_leaf * share_hidden_sheath
                     curr_hidden_sheath_outputs['proteins'] = curr_hiddenzone_outputs['proteins'] * share_leaf * share_hidden_sheath
+                    curr_hidden_sheath_outputs['cytokinins'] = model.calculate_init_cytokinins_emerged_tissue(curr_hidden_sheath_outputs['mstruct']) * share_leaf * share_hidden_sheath
                     self.outputs['elements'][hidden_sheath_id] = curr_hidden_sheath_outputs
+
+                    # --------------------------------------------------------------------------------------------------
+                    # Victoria - 10.2024
+                    # Add to visible part of the sheath
+                    visible_lamina_id = hiddenzone_id + tuple(['blade', 'LeafElement1'])
+                    curr_visible_leaf_inputs = all_elements_inputs[visible_lamina_id]
+                    visible_sheath_id = hiddenzone_id + tuple(['sheath', 'StemElement'])
+                    curr_visible_sheath_inputs = self.inputs['elements'][visible_sheath_id]
+                    curr_visible_sheath_outputs = self.outputs['elements'][visible_sheath_id]
+                    if visible_sheath_id not in self.outputs['elements'].keys():
+                        new_sheath_outputs = parameters.OrganInit().__dict__
+                        self.outputs['elements'][visible_sheath_id] = new_sheath_outputs
+
+                    share_visible_leaf = curr_visible_sheath_inputs['length'] / curr_visible_leaf_inputs['length']
+
+                    curr_visible_sheath_outputs['mstruct'] = curr_visible_leaf_inputs['mstruct'] * share_visible_leaf
+                    curr_visible_sheath_outputs['max_mstruct'] = curr_visible_leaf_inputs['mstruct'] * share_visible_leaf
+                    curr_visible_sheath_outputs['Nstruct'] = curr_visible_leaf_inputs['Nstruct'] * share_visible_leaf
+                    curr_visible_sheath_outputs['sucrose'] = curr_visible_leaf_inputs['sucrose'] * share_visible_leaf
+                    curr_visible_sheath_outputs['amino_acids'] = curr_visible_leaf_inputs['amino_acids'] * share_visible_leaf
+                    curr_visible_sheath_outputs['fructan'] = curr_visible_leaf_inputs['fructan'] * share_visible_leaf
+                    curr_visible_sheath_outputs['proteins'] = curr_visible_leaf_inputs['proteins'] * share_visible_leaf
+                    curr_visible_sheath_outputs['cytokinins'] = model.calculate_init_cytokinins_emerged_tissue(curr_visible_sheath_outputs['mstruct']) * share_visible_leaf
+                    self.outputs['elements'][visible_sheath_id] = curr_visible_sheath_outputs
+
+                    # Remove to visible leaf
+                    curr_visible_leaf_outputs = all_elements_outputs[visible_lamina_id]
+                    curr_visible_leaf_outputs['mstruct'] -= curr_visible_sheath_outputs['mstruct']
+                    curr_visible_leaf_outputs['Nstruct'] -= curr_visible_sheath_outputs['Nstruct']
+                    curr_visible_leaf_outputs['sucrose'] -= curr_visible_sheath_outputs['sucrose']
+                    curr_visible_leaf_outputs['amino_acids'] -= curr_visible_sheath_outputs['amino_acids']
+                    curr_visible_leaf_outputs['fructan'] -= curr_visible_sheath_outputs['fructan']
+                    curr_visible_leaf_outputs['proteins'] -= curr_visible_sheath_outputs['proteins']
+                    self.outputs['elements'][visible_lamina_id] = curr_visible_leaf_outputs
+                    # --------------------------------------------------------------------------------------------------
 
                     # Add to hidden part of the lamina, if any
                     if share_hidden_sheath < 1:
@@ -324,6 +360,7 @@ class Simulation(object):
                         curr_hidden_lamina_outputs['amino_acids'] = curr_hiddenzone_outputs['amino_acids'] * share_leaf * (1 - share_hidden_sheath)
                         curr_hidden_lamina_outputs['fructan'] = curr_hiddenzone_outputs['fructan'] * share_leaf * (1 - share_hidden_sheath)
                         curr_hidden_lamina_outputs['proteins'] = curr_hiddenzone_outputs['proteins'] * share_leaf * (1 - share_hidden_sheath)
+                        curr_hidden_lamina_outputs['cytokinins'] = model.calculate_init_cytokinins_emerged_tissue(curr_hiddenzone_outputs['mstruct']) * share_leaf * (1 - share_hidden_sheath)
                         self.outputs['elements'][hidden_lamina_id] = curr_hidden_lamina_outputs
 
                     # Remove in hiddenzone
