@@ -228,7 +228,7 @@ def calculate_sheath_mstruct(sheath_L, LSSW):
     return sheath_L * LSSW
 
 
-def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_teq, postflowering_stages):
+def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_teq, postflowering_stages, xylem_water_potential):
     """Root structural dry mass growth integrated over delta_t
 
     :param float sucrose: Amount of sucrose in roots (µmol C)
@@ -236,6 +236,7 @@ def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_teq, pos
     :param float mstruct: Root structural mass (g)
     :param float delta_teq: Time compensated for the effect of temperature - Time equivalent at Tref (s)
     :param bool postflowering_stages: Option : True to run a simulation with postflo parameter
+    :param float xylem_water_potential: Water potential of xylem (Mpa)
 
     :return: mstruct_C_growth (µmol C), mstruct_growth (g), Nstruct_growth (g), Nstruct_N_growth (µmol N)
     :rtype: (float, float, float, float)
@@ -252,7 +253,10 @@ def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_teq, pos
         mstruct_C_growth = max(0., ((conc_sucrose_effective ** N) * Vmax) / ((conc_sucrose_effective ** N) + (parameters.K_ROOTS_GROWTH ** N)) * delta_teq * mstruct)  #: root growth in C (µmol of C)
     else:
         mstruct_C_growth = 0.
-    mstruct_growth = mstruct_C_growth * parameters.CONVERSION_MMOL_C_G_MSTRUCT_ROOTS  #: root growth (g of structural dry mass)
+
+    hydraulic_regulation = 1 / (1 + (xylem_water_potential / -0.4) ** 3)    #: Regulation with plant water status
+
+    mstruct_growth = mstruct_C_growth * parameters.CONVERSION_MMOL_C_G_MSTRUCT_ROOTS * hydraulic_regulation    #: root growth (g of structural dry mass)
 
     Nstruct_growth = mstruct_growth * parameters.RATIO_N_MSTRUCT_ROOTS_  #: root growth in N (g of structural dry mass)
     Nstruct_N_growth = min(amino_acids, (Nstruct_growth / parameters.N_MOLAR_MASS) * 1E6)  #: root growth in nitrogen (µmol N)
