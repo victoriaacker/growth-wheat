@@ -254,7 +254,7 @@ def calculate_roots_mstruct_growth(sucrose, amino_acids, mstruct, delta_teq, pos
     else:
         mstruct_C_growth = 0.
 
-    hydraulic_regulation = 1 / (1 + (xylem_water_potential / -0.4) ** 3)    #: Regulation with plant water status
+    hydraulic_regulation = 1 / (1 + (xylem_water_potential / parameters.water_potential_crit) ** parameters.n)    #: Regulation with plant water status
 
     mstruct_growth = mstruct_C_growth * parameters.CONVERSION_MMOL_C_G_MSTRUCT_ROOTS * hydraulic_regulation    #: root growth (g of structural dry mass)
 
