@@ -39,7 +39,6 @@ FITTED_L0 = 0.01557936     #: Fitted value of leaf length at t=0 after rescaling
 
 # Internode Automate elongation
 FITTED_L0_IN = 1/59.0         #: Scaling factor of the internode in automate growth (dimensionless), fitted from Malvoisin 1984 II
-# te_IN = 210 * 3600 * 24 / 12  #: end of internode elongation in automate growth (s at 12°c) ; fitted from Malvoisin 1984 II
 te_IN = 331.7538 * 3600 * 24 / 12  #: end of internode elongation in automate growth; Ljutovac 2002, 250pl.m-2
 internode_rapid_growth_t = 288000  # Pseudo age at which the internode starts the rapid growth stage (s)
 
